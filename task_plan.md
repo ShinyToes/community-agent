@@ -6,7 +6,7 @@
 - 富文本结构持久化、图片权限与增量迁移：complete
 - 图片上传、颜色/背景/字号/基础排版及编辑恢复：complete
 - SQLite/MySQL与浏览器验证：complete
-- 备份部署到原5001服务、合并main及运行说明：in_progress（部署/文档已完成，待推送）
+- 备份部署到原5001服务、合并main及运行说明：complete（功能提交13d8339已推送main及feature/rich-media；markdown-phase1标签已推送）
 
 ## 当前任务：GitHub基线与富文本可回退试用
 
