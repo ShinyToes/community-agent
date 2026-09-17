@@ -3,6 +3,7 @@
 .venv-dev/
 .env.agent
 .env.community
+node_modules/
 instance/
 .pytest_cache/
 __pycache__/

@@ -1,0 +1,17 @@
+{
+  "name": "community-richtext-trial",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild rich-editor.js --bundle --minify --format=iife --outfile=../community/static/rich-editor.js --legal-comments=eof"
+  },
+  "dependencies": {
+    "@tiptap/core": "3.31.3",
+    "@tiptap/extension-table": "3.31.3",
+    "@tiptap/markdown": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

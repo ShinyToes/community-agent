@@ -7,9 +7,22 @@
   <div class="editor-panel">
     <label for="title">标题</label><input id="title" name="title" required maxlength="120" value="{{ revision.title if revision else '' }}" placeholder="用一句话介绍你的笔记或问题">
     <label for="tags">标签</label><input id="tags" name="tags" value="{{ revision.tags|join(', ') if revision else '' }}" placeholder="例如：Python, 数据库, 学习笔记" aria-describedby="tags-help"><small id="tags-help">最多 5 个，以逗号分隔，每个最多 24 个字符。</small>
+    <div class="section-heading editor-heading"><span class="body-label">正文</span><div class="editor-mode-switch" aria-label="编辑方式"><button type="button" data-editor-mode="rich" aria-pressed="false">富文本（试用）</button><button type="button" data-editor-mode="markdown" aria-pressed="true">Markdown</button></div></div>
+    <small id="rich-notice" role="status">正在加载试用编辑器，Markdown 仍可使用。</small>
+    <div id="rich-wrapper" hidden>
+      <div id="rich-toolbar" role="toolbar" aria-label="文本格式">
+        <button type="button" data-action="paragraph">正文</button><button type="button" data-action="heading" data-mark="heading" aria-pressed="false">标题</button>
+        <button type="button" data-action="bold" data-mark="bold" aria-pressed="false"><strong>加粗</strong></button><button type="button" data-action="italic" data-mark="italic" aria-pressed="false"><em>斜体</em></button>
+        <button type="button" data-action="bullet" data-mark="bulletList" aria-pressed="false">列表</button><button type="button" data-action="ordered" data-mark="orderedList" aria-pressed="false">编号</button>
+        <button type="button" data-action="quote" data-mark="blockquote" aria-pressed="false">引用</button><button type="button" data-action="code" data-mark="codeBlock" aria-pressed="false">代码块</button><button type="button" data-action="table">表格</button>
+        <button type="button" data-action="undo">撤销</button><button type="button" data-action="redo">重做</button>
+      </div><div id="rich-editor"></div>
+    </div>
+    <div id="markdown-wrapper">
     <div class="section-heading editor-heading"><label for="markdown">正文 · Markdown</label><small id="preview-status" role="status">实时预览</small><button class="button secondary small" id="preview-button" type="button">刷新预览</button></div>
     <div class="editor-columns"><textarea id="markdown" name="markdown" required maxlength="30000" rows="20" placeholder="支持标题、列表、引用、代码块和表格。">{{ revision.markdown if revision else '' }}</textarea><section id="preview-panel" class="markdown-body preview-panel" aria-label="正文预览"><p class="muted">开始输入正文，这里会自动显示排版。</p></section></div>
-    <small>最多 30,000 个字符。原始 HTML 将作为文字显示，本阶段暂不支持图片。</small>
+    </div>
+    <small>最多 30,000 个字符。支持基础排版，不支持图片、字体颜色和合并单元格。富文本转换可能规范化 Markdown 语法。</small>
     {% if post %}<label for="change_reason">修改说明（可选）</label><input id="change_reason" name="change_reason" maxlength="500" placeholder="简要说明本次修改">{% endif %}
   </div>
   <p id="editor-message" role="status" aria-live="polite"></p>
@@ -22,4 +35,5 @@
   <noscript><p class="form-error">请启用 JavaScript 以保存和预览帖子。</p></noscript>
 </form>
 <script src="{{ url_for('static', filename='posts.js') }}" defer></script>
+<script src="{{ url_for('static', filename='rich-editor.js') }}" defer></script>
 {% endblock %}

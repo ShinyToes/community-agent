@@ -80,8 +80,13 @@
     editor.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (busy) return;
+      if (!editor.elements.markdown.value.trim() || editor.elements.markdown.value.length > 30000) {
+        show('正文需要 1–30,000 个字符。', true);
+        return;
+      }
       const publish = event.submitter?.value === 'publish';
       busy = true; buttons.forEach(b => b.disabled = true); show('正在保存…');
+      editor.dispatchEvent(new CustomEvent('editor-lock', {detail: true}));
       const fields = [...editor.querySelectorAll('input:not([type="hidden"]), textarea')];
       fields.forEach(field => field.readOnly = true);
       try {
@@ -104,7 +109,7 @@
           const link = document.getElementById('latest-version');
           link.href = `/posts/${postId}`; link.hidden = false;
         }
-      } finally {busy = false; fields.forEach(field => field.readOnly = false); buttons.forEach(b => b.disabled = false);}
+      } finally {busy = false; fields.forEach(field => field.readOnly = false); buttons.forEach(b => b.disabled = false); editor.dispatchEvent(new CustomEvent('editor-lock', {detail: false}));}
     });
   }
   const remove = document.getElementById('delete-post');

@@ -1,5 +1,13 @@
 # Community Agent 项目计划（含历史学籍阶段）
 
+## 当前任务：GitHub基线与富文本可回退试用
+
+- 清理并检查发布源码、独立仓库main基线推送：complete
+- experiment/rich-text分支、Tiptap本地资源及模式切换：complete
+- 独立5002服务/13309数据库/会话隔离：complete
+- 浏览器与37项SQLite测试、回退说明：complete
+- 提交与推送试验分支：in_progress
+
 ## 当前任务：阶段 1 内容发布
 
 - 阶段0源码快照、需求与现状核对：complete
