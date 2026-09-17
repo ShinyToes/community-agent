@@ -6,7 +6,7 @@
 - experiment/rich-text分支、Tiptap本地资源及模式切换：complete
 - 独立5002服务/13309数据库/会话隔离：complete
 - 浏览器与37项SQLite测试、回退说明：complete
-- 提交与推送试验分支：in_progress
+- 提交与推送试验分支：complete（远程main与experiment/rich-text均已核对）
 
 ## 当前任务：阶段 1 内容发布
 
