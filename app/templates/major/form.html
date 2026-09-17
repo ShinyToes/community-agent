@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{% if major %}编辑{% else %}新增{% endif %}专业{% endblock %}
+{% block page_title %}{% if major %}编辑专业 - {{ major.major_name }}{% else %}新增专业{% endif %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">专业代码 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="major_code" required
+                               value="{{ major.major_code if major else '' }}" placeholder="如: 080901">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">专业名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="major_name" required
+                               value="{{ major.major_name if major else '' }}" placeholder="如: 计算机科学与技术">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">所属学院 <span class="text-danger">*</span></label>
+                        <select class="form-select" name="college_id" required>
+                            <option value="">请选择学院</option>
+                            {% for c in colleges %}
+                            <option value="{{ c.college_id }}"
+                                {% if major and major.college_id == c.college_id %}selected{% endif %}>
+                                {{ c.college_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">学制(年) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="duration" required
+                               value="{{ major.duration if major else 4 }}" min="2" max="8">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">学位类型 <span class="text-danger">*</span></label>
+                        <select class="form-select" name="degree_type" required>
+                            <option value="">请选择</option>
+                            <option value="学士" {% if major and major.degree_type == '学士' %}selected{% endif %}>学士</option>
+                            <option value="硕士" {% if major and major.degree_type == '硕士' %}selected{% endif %}>硕士</option>
+                            <option value="博士" {% if major and major.degree_type == '博士' %}selected{% endif %}>博士</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                    <a href="{{ url_for('major.list_majors') }}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

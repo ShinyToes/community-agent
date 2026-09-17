@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}体检记录管理{% endblock %}
+{% block page_title %}体检记录管理{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        {% if current_user.role in ('admin', 'counselor') %}
+        <a href="{{ url_for('physical_exam.create_exam') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> 新增体检记录
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="student_id" class="form-label">学号/姓名</label>
+                    <input type="text" class="form-control" id="student_id" name="student_id"
+                           value="{{ request.args.get('student_id', '') }}" placeholder="学号或姓名">
+                </div>
+                <div class="col-md-2">
+                    <label for="class_id" class="form-label">班级</label>
+                    <select class="form-select" id="class_id" name="class_id">
+                        <option value="">全部班级</option>
+                        {% for cls in classes %}
+                        <option value="{{ cls.class_id }}" {% if request.args.get('class_id') == cls.class_id|string %}selected{% endif %}>
+                            {{ cls.class_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label">开始日期</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from"
+                           value="{{ request.args.get('date_from', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_to" class="form-label">结束日期</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to"
+                           value="{{ request.args.get('date_to', '') }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary me-2"><i class="bi bi-search"></i> 查询</button>
+                    <a href="{{ url_for('physical_exam.list_exams') }}" class="btn btn-outline-secondary me-2">重置</a>
+                    <a href="{{ url_for('physical_exam.stats') }}" class="btn btn-outline-info"><i class="bi bi-bar-chart"></i> 统计</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="dataTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>记录ID</th><th>学生</th><th>学号</th><th>体检日期</th>
+                            <th>身高(cm)</th><th>体重(kg)</th><th>左眼视力</th><th>右眼视力</th>
+                            <th>血型</th><th>健康状况</th><th>医院</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in exams %}
+                        <tr>
+                            <td>{{ exam.exam_id }}</td>
+                            <td>{{ exam.student.name if exam.student else '' }}</td>
+                            <td>{{ exam.student_id }}</td>
+                            <td>{{ exam.exam_date.strftime('%Y-%m-%d') if exam.exam_date else '' }}</td>
+                            <td>{{ exam.height }}</td><td>{{ exam.weight }}</td>
+                            <td>{{ exam.vision_left }}</td><td>{{ exam.vision_right }}</td>
+                            <td>{{ exam.blood_type }}</td>
+                            <td>
+                                {% if exam.health_status == '健康' %}
+                                <span class="badge bg-success">{{ exam.health_status }}</span>
+                                {% elif exam.health_status == '良好' %}
+                                <span class="badge bg-primary">{{ exam.health_status }}</span>
+                                {% elif exam.health_status == '一般' %}
+                                <span class="badge bg-warning text-dark">{{ exam.health_status }}</span>
+                                {% elif exam.health_status == '较差' %}
+                                <span class="badge bg-danger">{{ exam.health_status }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ exam.health_status or '-' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ exam.hospital or '-' }}</td>
+                            <td>
+                                {% if current_user.role in ('admin', 'counselor') %}
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('physical_exam.edit_exam', exam_id=exam.exam_id) }}"
+                                       class="btn btn-outline-warning" title="编辑"><i class="bi bi-pencil"></i></a>
+                                    <form method="POST" action="{{ url_for('physical_exam.delete_exam', exam_id=exam.exam_id) }}"
+                                          style="display:inline;" onsubmit="return confirm('确定要删除此体检记录吗？');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger" title="删除"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                                {% else %}<span class="text-muted">-</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="12" class="text-center text-muted">暂无体检记录</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() { $('#dataTable').DataTable(); });
+</script>
+{% endblock %}

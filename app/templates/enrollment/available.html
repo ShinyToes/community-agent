@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}可选课程{% endblock %}
+{% block page_title %}可选课程{% endblock %}
+{% block content %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('enrollment.available_courses') }}" class="row g-2">
+            <div class="col-md-3">
+                <select name="semester" class="form-select">
+                    <option value="">全部学期</option>
+                    <option value="第一学期" {% if semester_filter == '第一学期' %}selected{% endif %}>第一学期</option>
+                    <option value="第二学期" {% if semester_filter == '第二学期' %}selected{% endif %}>第二学期</option>
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel"></i> 筛选</button>
+                <a href="{{ url_for('enrollment.available_courses') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if offerings %}
+<div class="alert alert-info" id="conflictAlert" style="display:none;">
+    <i class="bi bi-exclamation-triangle"></i>
+    部分课程与您已有课程存在<strong>时间冲突</strong>，已标注在课程卡片上。选课将被存储过程再次验证。
+</div>
+<div class="row">
+{% for o in offerings %}
+    <div class="col-lg-6 mb-3">
+        <div class="card h-100 offering-card" data-offering-id="{{ o.offering_id }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">{{ o.course.course_name if o.course else '未知课程' }}</span>
+                <span>
+                    <span class="badge bg-warning text-dark conflict-badge" style="display:none;">
+                        <i class="bi bi-clock"></i> 时间冲突
+                    </span>
+                    <span class="badge bg-info">{{ o.course.credits if o.course else '-' }} 学分</span>
+                </span>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-2">
+                    <tr>
+                        <td class="text-muted" style="width: 90px;">授课教师</td>
+                        <td>{{ o.teacher.name if o.teacher else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">时间安排</td>
+                        <td><strong>{{ o.schedule or '未设置' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">教室</td>
+                        <td>{{ o.classroom or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">课程类型</td>
+                        <td>
+                            <span class="badge {% if o.course and o.course.course_type == '必修' %}bg-danger
+                                               {% elif o.course and o.course.course_type == '选修' %}bg-primary
+                                               {% else %}bg-success{% endif %}">
+                                {{ o.course.course_type if o.course else '-' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">学年</td>
+                        <td>{{ o.academic_year }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">学期</td>
+                        <td>{{ o.semester }}</td>
+                    </tr>
+                </table>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">选课情况</small>
+                        <small>{{ o.cur_students }} / {{ o.max_students }}</small>
+                    </div>
+                    {% set pct = (o.cur_students / o.max_students * 100) if o.max_students > 0 else 0 %}
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {% if pct >= 90 %}bg-danger
+                                               {% elif pct >= 70 %}bg-warning
+                                               {% else %}bg-success{% endif %}"
+                             role="progressbar" style="width: {{ pct }}%"
+                             aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('enrollment.enroll') }}"
+                      class="enroll-form"
+                      onsubmit="return confirmEnroll(this, {{ o.offering_id }}, {% if o.schedule %}'{{ o.schedule }}'{% else %}''{% endif %})">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="offering_id" value="{{ o.offering_id }}">
+                    <button type="submit" class="btn btn-primary btn-sm w-100 enroll-btn"
+                            {% if o.cur_students >= o.max_students %}disabled{% endif %}>
+                        <i class="bi bi-plus-circle"></i>
+                        {% if o.cur_students >= o.max_students %}已满{% else %}选课{% endif %}
+                    </button>
+                </form>
+                <div class="conflict-warning text-danger small mt-1" style="display:none;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 该课程与您的已有课程时间冲突
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> 当前没有可选课程。
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 选课冲突检测
+var conflictCount = 0;
+
+function checkConflicts() {
+    var cards = document.querySelectorAll('.offering-card');
+    var promises = [];
+
+    cards.forEach(function(card) {
+        var offeringId = card.getAttribute('data-offering-id');
+        var url = '/enrollments/check-conflict/' + offeringId;
+        var promise = fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.has_conflict === true) {
+                    // 显示冲突标记
+                    var badge = card.querySelector('.conflict-badge');
+                    if (badge) badge.style.display = '';
+                    var warning = card.querySelector('.conflict-warning');
+                    if (warning) warning.style.display = '';
+                    conflictCount++;
+                }
+            })
+            .catch(function() {
+                // API 调用失败静默处理，存储过程会做最终校验
+            });
+        promises.push(promise);
+    });
+
+    Promise.all(promises).then(function() {
+        if (conflictCount > 0) {
+            document.getElementById('conflictAlert').style.display = '';
+            document.getElementById('conflictAlert').innerHTML =
+                '<i class="bi bi-exclamation-triangle"></i> ' +
+                '检测到 <strong>' + conflictCount + '</strong> 门课程与您已有课程存在<strong>时间冲突</strong>，已标注。' +
+                '选课时存储过程将再次验证。';
+        }
+    });
+}
+
+function confirmEnroll(form, offeringId, schedule) {
+    // 检查是否有冲突标记
+    var card = form.closest('.offering-card');
+    var hasConflict = card.querySelector('.conflict-badge').style.display !== 'none';
+
+    var msg = '确定要选修该课程吗？';
+    if (hasConflict) {
+        msg = '⚠️ 该课程与您已有课程时间冲突！\n\n确定仍要尝试选课吗？（存储过程将做最终校验）';
+    }
+    if (!schedule || schedule.trim() === '') {
+        msg += '\n\n注意：该课程未设置时间安排。';
+    }
+    return confirm(msg);
+}
+
+// 页面加载完成后检查所有课程冲突
+document.addEventListener('DOMContentLoaded', function() {
+    checkConflicts();
+});
+</script>
+{% endblock %}

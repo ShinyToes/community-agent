@@ -1,0 +1,173 @@
+/* ============================================================
+   学籍管理系统 - 自定义样式
+   ============================================================ */
+
+/* 侧边栏 */
+.sidebar {
+    min-height: calc(100vh - 56px);
+    box-shadow: inset -2px 0 5px rgba(0,0,0,.05);
+}
+
+.sidebar .nav-link {
+    color: #333;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin: 2px 8px;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #e8f0fe;
+    color: #0d6efd;
+}
+
+.sidebar .nav-link i {
+    margin-right: 8px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar .sidebar-heading {
+    margin-top: 12px;
+    padding-left: 4px;
+}
+
+.sidebar .sidebar-heading .nav-link {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.75rem;
+    cursor: default;
+}
+
+.sidebar .sidebar-heading .nav-link:hover {
+    background-color: transparent;
+    color: #6c757d !important;
+}
+
+/* 内容区 */
+main {
+    padding-top: 0 !important;
+}
+
+main > .pt-3 {
+    padding-top: 0.5rem !important;
+}
+
+/* 仪表盘卡片 */
+.stat-card {
+    border-radius: 10px;
+    transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+}
+
+.stat-card .card-body {
+    padding: 1.25rem;
+}
+
+.stat-card .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.7;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-card .stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* 表格样式 */
+.table th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    margin-left: 0.5em;
+}
+
+/* 表单 */
+.form-label {
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* 标签页 */
+.nav-tabs .nav-link {
+    font-size: 0.9rem;
+}
+
+/* 学生详情卡片 */
+.student-profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 成绩单打印 */
+@media print {
+    .navbar, .sidebar, .btn, form {
+        display: none !important;
+    }
+    main {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+}
+
+/* 图表容器 */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-height: 400px;
+}
+
+/* 文件管理 */
+.file-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: box-shadow 0.2s;
+}
+
+.file-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,.1);
+}
+
+.file-card .file-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+/* 课程容量进度条 */
+.capacity-bar {
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* 响应式调整 */
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 0;
+        overflow-y: auto;
+    }
+}

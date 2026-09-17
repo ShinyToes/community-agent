@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}成绩单 - 学籍管理系统{% endblock %}
+{% block page_title %}学生成绩单{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('grade.my_grades') }}">我的成绩</a></li>
+        <li class="breadcrumb-item active" aria-current="page">成绩单</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Print-specific CSS -->
+<style>
+@media print {
+    /* Hide non-printable elements */
+    body {
+        background: white !important;
+    }
+    nav, .sidebar, .breadcrumb, .btn, .no-print {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .card-header {
+        background: none !important;
+        color: black !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+    }
+    .container-fluid {
+        padding: 0 !important;
+    }
+    .table {
+        font-size: 12px;
+    }
+    .table thead th {
+        background-color: #eee !important;
+        color: black !important;
+        border: 1px solid #333 !important;
+    }
+    @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not student %}
+<div class="card mb-3 no-print">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('grade.transcript') }}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="student_id" class="form-label">请输入学号查询成绩单</label>
+                <input type="text" class="form-control" id="student_id" name="student_id" placeholder="如 2021001" required>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> 查询</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if student %}
+<!-- Print Button (hidden when printing) -->
+<div class="d-flex justify-content-end mb-3 no-print">
+    <button type="button" class="btn btn-primary" onclick="window.print()">
+        <i class="bi bi-printer"></i> 打印成绩单
+    </button>
+    <a href="{{ url_for('grade.my_grades') }}" class="btn btn-outline-secondary ms-2">
+        <i class="bi bi-arrow-left"></i> 返回成绩列表</a>
+</div>
+
+<!-- Transcript Content -->
+<div class="card">
+    <!-- Header -->
+    <div class="card-header text-center">
+        <h3 class="mb-1">学生成绩单</h3>
+    </div>
+    <div class="card-body">
+        <!-- Student Info -->
+        <table class="table table-bordered mb-4">
+            <tbody>
+                <tr>
+                    <td class="fw-bold bg-light" style="width: 15%;">学号</td>
+                    <td style="width: 35%;">{{ student.student_id }}</td>
+                    <td class="fw-bold bg-light" style="width: 15%;">姓名</td>
+                    <td style="width: 35%;">{{ student.name }}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold bg-light">性别</td>
+                    <td>{{ '男' if student.gender == 'M' else '女' }}</td>
+                    <td class="fw-bold bg-light">专业</td>
+                    <td>{{ student.major.major_name if student.major else '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold bg-light">班级</td>
+                    <td>{{ student.class_.class_name if student.class_ else '-' }}</td>
+                    <td class="fw-bold bg-light">入学年份</td>
+                    <td>{{ student.enrollment_year }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Summary -->
+        <table class="table table-bordered mb-4">
+            <tbody>
+                <tr>
+                    <td class="fw-bold bg-light text-center" style="width: 25%;">累计GPA</td>
+                    <td class="text-center" style="width: 25%;">
+                        <strong class="fs-4">{{ '%.2f'|format(student_gpa) if student_gpa is not none else '暂无' }}</strong>
+                    </td>
+                    <td class="fw-bold bg-light text-center" style="width: 25%;">已完成学分</td>
+                    <td class="text-center" style="width: 25%;">
+                        <strong class="fs-4">{{ completed_credits or 0 }}</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="fw-bold bg-light text-center">班级排名</td>
+                    <td class="text-center">
+                        <strong class="fs-5">
+                            {% if class_ranking %}
+                            第 {{ class_ranking }} 名
+                            {% else %}
+                            暂无
+                            {% endif %}
+                        </strong>
+                    </td>
+                    <td class="fw-bold bg-light text-center">学制</td>
+                    <td class="text-center">{{ student.education_length }} 年</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Grades Table -->
+        <h5 class="border-bottom pb-2 mb-3">课程成绩明细</h5>
+        {% if enrollments %}
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>学年</th>
+                    <th>学期</th>
+                    <th>课程代码</th>
+                    <th>课程名称</th>
+                    <th>学分</th>
+                    <th>课程类型</th>
+                    <th>总评成绩</th>
+                    <th>GPA</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.offering.academic_year }}</td>
+                    <td>{{ enrollment.offering.semester }}</td>
+                    <td>{{ enrollment.offering.course.course_code }}</td>
+                    <td>{{ enrollment.offering.course.course_name }}</td>
+                    <td>{{ enrollment.offering.course.credits }}</td>
+                    <td>{{ enrollment.offering.course.course_type }}</td>
+                    <td>
+                        {% if enrollment.grade and enrollment.grade.total_score is not none %}
+                        <strong>{{ '%.1f'|format(enrollment.grade.total_score|float) }}</strong>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if enrollment.grade and enrollment.grade.gpa is not none %}
+                        {{ enrollment.grade.gpa }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if enrollment.grade %}
+                        {{ enrollment.grade.status }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Summary row for grades table -->
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="alert alert-primary text-center">
+                    <small class="d-block">总课程数</small>
+                    <strong class="fs-4">{{ enrollments|length }}</strong>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="alert alert-success text-center">
+                    <small class="d-block">累计GPA</small>
+                    <strong class="fs-4">{{ '%.2f'|format(student_gpa) if student_gpa is not none else '暂无' }}</strong>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="alert alert-info text-center">
+                    <small class="d-block">已完成学分</small>
+                    <strong class="fs-4">{{ completed_credits or 0 }}</strong>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> 暂无已录入成绩的课程记录。
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="row mt-5 pt-4 border-top">
+            <div class="col-12 text-center">
+                <p class="text-muted">
+                    本成绩单由学籍管理系统自动生成，仅供学生本人查阅。<br>
+                    如有疑问，请联系教务处。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

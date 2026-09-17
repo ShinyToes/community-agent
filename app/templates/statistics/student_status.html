@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}学生状态统计{% endblock %}
+{% block page_title %}学生概况统计{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-3"><div class="card stat-card bg-primary bg-opacity-10"><div class="card-body text-center"><h3 id="totalCount">-</h3><p class="mb-0">学生总数</p></div></div></div>
+        <div class="col-md-3"><div class="card stat-card bg-success bg-opacity-10"><div class="card-body text-center"><h3 id="activeCount">-</h3><p class="mb-0">在读人数</p></div></div></div>
+        <div class="col-md-3"><div class="card stat-card bg-info bg-opacity-10"><div class="card-body text-center"><h3 id="majorCount">-</h3><p class="mb-0">专业数量</p></div></div></div>
+        <div class="col-md-3"><div class="card stat-card bg-warning bg-opacity-10"><div class="card-body text-center"><h3 id="classCount">-</h3><p class="mb-0">班级数量</p></div></div></div>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-6"><div class="card"><div class="card-header">学籍状态分布</div><div class="card-body"><canvas id="statusChart" height="300"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header">各专业人数</div><div class="card-body"><canvas id="majorChart" height="300"></canvas></div></div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $.getJSON('{{ url_for("statistics.api_student_status") }}', function(data) {
+        var total = data.values.reduce(function(a,b){return a+b;}, 0);
+        $('#totalCount').text(total);
+        $('#activeCount').text(data.values[data.labels.indexOf('在读')] || 0);
+        new Chart(document.getElementById('statusChart').getContext('2d'), {
+            type: 'pie',
+            data: {labels: data.labels, datasets: [{data: data.values, backgroundColor: ['#198754','#ffc107','#dc3545','#0dcaf0','#6c757d']}]},
+            options: {responsive: true, maintainAspectRatio: false}
+        });
+    });
+    $.getJSON('{{ url_for("statistics.api_major_stats") }}', function(data) {
+        $('#majorCount').text(data.labels.length);
+        new Chart(document.getElementById('majorChart').getContext('2d'), {
+            type: 'bar',
+            data: {labels: data.labels, datasets: [{label: '学生人数', data: data.values, backgroundColor: '#0d6efd'}]},
+            options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true, ticks: {stepSize: 1}}}}
+        });
+    });
+    $.getJSON('{{ url_for("statistics.api_student_status") }}', function(d) {
+        $.getJSON('{{ url_for("statistics.api_major_stats") }}', function(d2) {
+            var cls = {{ classes|length }};
+            $('#classCount').text(cls);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{{ '编辑帖子' if post else '写帖子' }} · Community{% endblock %}
+{% block content %}
+<div class="section-heading"><div><p class="eyebrow">记录你的探索</p><h1>{{ '编辑帖子' if post else '写一篇帖子' }}</h1></div><a href="{{ url_for('posts.mine') }}">我的内容</a></div>
+<form id="post-editor" data-post-id="{{ post.id if post else '' }}" data-version="{{ post.version if post else '' }}" data-status="{{ post.status if post else 'draft' }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="editor-panel">
+    <label for="title">标题</label><input id="title" name="title" required maxlength="120" value="{{ revision.title if revision else '' }}" placeholder="用一句话介绍你的笔记或问题">
+    <label for="tags">标签</label><input id="tags" name="tags" value="{{ revision.tags|join(', ') if revision else '' }}" placeholder="例如：Python, 数据库, 学习笔记" aria-describedby="tags-help"><small id="tags-help">最多 5 个，以逗号分隔，每个最多 24 个字符。</small>
+    <div class="section-heading editor-heading"><label for="markdown">正文 · Markdown</label><small id="preview-status" role="status">实时预览</small><button class="button secondary small" id="preview-button" type="button">刷新预览</button></div>
+    <div class="editor-columns"><textarea id="markdown" name="markdown" required maxlength="30000" rows="20" placeholder="支持标题、列表、引用、代码块和表格。">{{ revision.markdown if revision else '' }}</textarea><section id="preview-panel" class="markdown-body preview-panel" aria-label="正文预览"><p class="muted">开始输入正文，这里会自动显示排版。</p></section></div>
+    <small>最多 30,000 个字符。原始 HTML 将作为文字显示，本阶段暂不支持图片。</small>
+    {% if post %}<label for="change_reason">修改说明（可选）</label><input id="change_reason" name="change_reason" maxlength="500" placeholder="简要说明本次修改">{% endif %}
+  </div>
+  <p id="editor-message" role="status" aria-live="polite"></p>
+  <a id="latest-version" target="_blank" rel="noopener" hidden>在新窗口查看最新内容</a>
+  <div class="editor-actions">
+    <span id="visibility-hint">{{ '更新后将立即改变公开内容。' if post and post.status == 'published' else '草稿仅自己可见，发布后所有人可见。' }}</span>
+    <button class="button secondary" type="submit" name="intent" value="save">{{ '更新公开内容' if post and post.status == 'published' else '保存草稿' }}</button>
+    {% if not post or post.status == 'draft' %}<button class="button" type="submit" name="intent" value="publish">发布帖子</button>{% endif %}
+  </div>
+  <noscript><p class="form-error">请启用 JavaScript 以保存和预览帖子。</p></noscript>
+</form>
+<script src="{{ url_for('static', filename='posts.js') }}" defer></script>
+{% endblock %}

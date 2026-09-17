@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{% if college %}编辑{% else %}新增{% endif %}学院{% endblock %}
+{% block page_title %}{% if college %}编辑学院 - {{ college.college_name }}{% else %}新增学院{% endif %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">学院代码 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="college_code" required
+                               value="{{ college.college_code if college else '' }}" placeholder="如: CS">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">学院名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="college_name" required
+                               value="{{ college.college_name if college else '' }}" placeholder="如: 计算机学院">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">院长</label>
+                        <input type="text" class="form-control" name="dean"
+                               value="{{ college.dean if college else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">办公地点</label>
+                        <input type="text" class="form-control" name="office"
+                               value="{{ college.office if college else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">办公电话</label>
+                        <input type="text" class="form-control" name="phone"
+                               value="{{ college.phone if college else '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                    <a href="{{ url_for('college.list_colleges') }}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

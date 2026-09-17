@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}成绩分布统计{% endblock %}
+{% block page_title %}成绩分布统计{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">年级</label>
+                    <select class="form-select" id="yearFilter" onchange="loadMajors()">
+                        <option value="">全部</option>
+                        {% for y in years %}<option value="{{ y }}">{{ y }}级</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">学院</label>
+                    <select class="form-select" id="collegeFilter" onchange="loadMajors()">
+                        <option value="">全部</option>
+                        {% for c in colleges %}<option value="{{ c.college_id }}">{{ c.college_name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">专业 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="majorFilter">
+                        <option value="">-- 请选择专业 --</option>
+                        {% for m in majors %}
+                        <option value="{{ m.major_id }}" data-college="{{ m.college_id }}">{{ m.major_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-auto">
+                    <button type="button" class="btn btn-primary" onclick="doQuery()">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header" id="distTitle">学生加权平均成绩分布</div>
+                <div class="card-body"><div style="position:relative; width:100%; height:300px;"><canvas id="distChart"></canvas></div></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">专业平均绩点</div>
+                <div class="card-body text-center pt-5 pb-5">
+                    <h1 id="gpaValue" class="display-3 text-primary">-</h1>
+                    <p id="gpaLabel" class="text-muted">请点击查询</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var allMajorOpts = [];
+$(document).ready(function() {
+    $('#majorFilter option[data-college]').each(function() {
+        allMajorOpts.push({v: $(this).val(), c: $(this).data('college'), t: $(this).text()});
+    });
+    // 默认加载21级计算机
+    $('#yearFilter').val('2021'); $('#collegeFilter').val('1'); loadMajors(); $('#majorFilter').val('1');
+    doQuery();
+});
+
+function loadMajors() {
+    var cid = $('#collegeFilter').val();
+    var sel = $('#majorFilter');
+    sel.empty().append('<option value="">-- 请选择专业 --</option>');
+    allMajorOpts.forEach(function(o) { if (!cid || o.c == cid) sel.append($('<option>').val(o.v).text(o.t)); });
+}
+
+function doQuery() {
+    var year = $('#yearFilter').val(), college = $('#collegeFilter').val(), major = $('#majorFilter').val();
+    if (!major) { alert('请先选择专业'); return; }
+    var majorName = $('#majorFilter option:selected').text();
+    $('#distTitle').text('总评成绩分布 - ' + majorName);
+
+    // 成绩分布柱状图
+    $.getJSON('/statistics/api/grade-distribution', {year: year, college_id: college, major_id: major}, function(d) {
+        var ctx = document.getElementById('distChart');
+        if (window._distChart) window._distChart.destroy();
+        window._distChart = new Chart(ctx, {
+            type: 'bar',
+            data: {labels: d.labels, datasets: [{label: '人数', data: d.values, backgroundColor: 'rgba(54,162,235,0.7)', borderColor: 'rgba(54,162,235,1)', borderWidth: 1}]},
+            options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true, ticks: {stepSize: 1}}}}
+        });
+    }).fail(function(jqxhr, textStatus, error) {
+        console.error('Grade dist API error:', textStatus, error);
+    });
+
+    // 只查平均GPA数值
+    $.getJSON('/statistics/api/major-gpa', {year: year, major_id: major}, function(d) {
+        $('#gpaValue').text(d.value.toFixed(2));
+        $('#gpaLabel').text(majorName + ' 平均绩点');
+    });
+}
+</script>
+{% endblock %}

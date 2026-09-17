@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}奖惩记录{% endblock %}
+{% block page_title %}奖惩记录{% endblock %}
+{% block content %}
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">按类型筛选:</label>
+        <select id="typeFilter" class="form-select form-select-sm w-auto" onchange="applyFilter()">
+            <option value="">全部</option>
+            <option value="奖励" {% if type_filter == '奖励' %}selected{% endif %}>奖励</option>
+            <option value="惩罚" {% if type_filter == '惩罚' %}selected{% endif %}>惩罚</option>
+        </select>
+    </div>
+    {% if current_user.role in ('admin', 'counselor') %}
+    <div>
+        <a href="{{ url_for('reward_punish.stats') }}" class="btn btn-outline-info me-1">
+            <i class="bi bi-bar-chart"></i> 统计
+        </a>
+        <a href="{{ url_for('reward_punish.create_record') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 新增记录
+        </a>
+    </div>
+    {% endif %}
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>学生</th>
+                    <th>类型</th>
+                    <th>标题</th>
+                    <th>级别</th>
+                    <th>日期</th>
+                    <th>描述</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.record_id }}</td>
+                    <td>
+                        {{ r.student.name if r.student else '-' }}
+                        <br><small class="text-muted">{{ r.student_id }}</small>
+                    </td>
+                    <td>
+                        {% if r.type == '奖励' %}
+                        <span class="badge bg-success">奖励</span>
+                        {% elif r.type == '惩罚' %}
+                        <span class="badge bg-danger">惩罚</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ r.type }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ r.title }}</td>
+                    <td>{{ r.level or '-' }}</td>
+                    <td>{{ r.rp_date }}</td>
+                    <td>
+                        {% if r.description %}
+                        {{ r.description[:30] }}{% if r.description|length > 30 %}...{% endif %}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if current_user.role in ('admin', 'counselor') %}
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('reward_punish.edit_record', record_id=r.record_id) }}"
+                               class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                            <form method="POST"
+                                  action="{{ url_for('reward_punish.delete_record', record_id=r.record_id) }}"
+                                  onsubmit="return confirm('确定删除该记录吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/zh.json'
+        },
+        order: [[5, 'desc']]
+    });
+});
+function applyFilter() {
+    var type = $('#typeFilter').val();
+    window.location.href = "{{ url_for('reward_punish.list_records') }}?type=" + encodeURIComponent(type);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+name: community-agent
+services:
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "127.0.0.1:${COMMUNITY_MYSQL_PORT:-13307}:3306"
+    environment:
+      MYSQL_DATABASE: community_agent
+      MYSQL_USER: community_user
+      MYSQL_PASSWORD: ${COMMUNITY_MYSQL_PASSWORD:?Run tools/setup_community.py}
+      MYSQL_ROOT_PASSWORD: ${COMMUNITY_MYSQL_ROOT_PASSWORD:?Run tools/setup_community.py}
+    volumes:
+      - community_mysql_data:/var/lib/mysql
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin ping -h 127.0.0.1 -uroot --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  community_mysql_data:

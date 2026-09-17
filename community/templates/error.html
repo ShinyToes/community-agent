@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}{{ status }} · Community{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <p class="eyebrow">{{ status }}</p>
+  <h1>暂时无法完成操作</h1>
+  <p role="alert">{{ message }}</p>
+  {% if status == 401 %}<a class="button" href="{{ url_for('auth.login') }}">去登录</a>{% endif %}
+  <a class="back" href="{{ url_for('index') }}">返回社区首页</a>
+</section>
+{% endblock %}

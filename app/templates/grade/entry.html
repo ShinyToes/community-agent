@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}成绩录入 - 学籍管理系统{% endblock %}
+{% block page_title %}成绩录入{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('grade.list_offerings_for_grade') }}">成绩录入</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ offering.course.course_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Course Info Header -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> 课程信息</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <span class="text-muted">课程名称：</span>
+                <strong>{{ offering.course.course_name }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">课程代码：</span>
+                <strong>{{ offering.course.course_code }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">授课教师：</span>
+                <strong>{{ offering.teacher.name }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">学分：</span>
+                <strong>{{ offering.course.credits }}</strong>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-3">
+                <span class="text-muted">学年：</span>
+                <strong>{{ offering.academic_year }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">学期：</span>
+                <strong>{{ offering.semester }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">上课安排：</span>
+                <strong>{{ offering.schedule or '未设置' }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted">教室：</span>
+                <strong>{{ offering.classroom or '未指定' }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Entry Form -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="bi bi-pencil-square"></i> 成绩录入表</h5>
+        <span class="badge bg-info">选课人数：{{ enrollments|length }} / {{ offering.max_students }}</span>
+    </div>
+    <div class="card-body">
+        {% if enrollments %}
+        <form method="POST" action="{{ url_for('grade.submit_grades', offering_id=offering.offering_id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle" id="gradeTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>平时成绩 (0-100)</th>
+                            <th>期中成绩 (0-100)</th>
+                            <th>期末成绩 (0-100)</th>
+                            <th>总评成绩</th>
+                            <th>GPA</th>
+                            <th>补考成绩</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrollments %}
+                        <tr>
+                            <td>{{ enrollment.student_id }}</td>
+                            <td>{{ enrollment.student.name }}</td>
+
+                            {% if enrollment.grade %}
+                            <!-- Existing grade: show input fields pre-filled -->
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="daily_{{ enrollment.student_id }}"
+                                       value="{{ enrollment.grade.daily_score if enrollment.grade.daily_score is not none else '' }}"
+                                       class="form-control form-control-sm score-input"
+                                       placeholder="平时成绩">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="midterm_{{ enrollment.student_id }}"
+                                       value="{{ enrollment.grade.midterm_score if enrollment.grade.midterm_score is not none else '' }}"
+                                       class="form-control form-control-sm score-input"
+                                       placeholder="期中成绩">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="final_{{ enrollment.student_id }}"
+                                       value="{{ enrollment.grade.final_score if enrollment.grade.final_score is not none else '' }}"
+                                       class="form-control form-control-sm score-input"
+                                       placeholder="期末成绩">
+                            </td>
+                            <td>
+                                <input type="text" readonly
+                                       value="{{ enrollment.grade.total_score if enrollment.grade.total_score is not none else '' }}"
+                                       class="form-control form-control-sm bg-light text-center"
+                                       style="font-weight: bold;">
+                            </td>
+                            <td>
+                                <input type="text" readonly
+                                       value="{{ enrollment.grade.gpa if enrollment.grade.gpa is not none else '' }}"
+                                       class="form-control form-control-sm bg-light text-center
+                                       {% if enrollment.grade.gpa %}
+                                       {% if enrollment.grade.gpa >= 4.0 %}text-success fw-bold
+                                       {% elif enrollment.grade.gpa >= 3.0 %}text-primary
+                                       {% elif enrollment.grade.gpa >= 2.0 %}text-warning
+                                       {% else %}text-danger
+                                       {% endif %}{% endif %}">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="makeup_{{ enrollment.student_id }}"
+                                       value="{{ enrollment.grade.makeup_score if enrollment.grade.makeup_score is not none else '' }}"
+                                       class="form-control form-control-sm"
+                                       placeholder="补考成绩">
+                            </td>
+                            <td>
+                                <select name="status_{{ enrollment.student_id }}" class="form-select form-select-sm">
+                                    <option value="正常" {% if enrollment.grade.status == '正常' %}selected{% endif %}>正常</option>
+                                    <option value="补考" {% if enrollment.grade.status == '补考' %}selected{% endif %}>补考</option>
+                                    <option value="重修" {% if enrollment.grade.status == '重修' %}selected{% endif %}>重修</option>
+                                    <option value="缓考" {% if enrollment.grade.status == '缓考' %}selected{% endif %}>缓考</option>
+                                    <option value="缺考" {% if enrollment.grade.status == '缺考' %}selected{% endif %}>缺考</option>
+                                </select>
+                            </td>
+                            {% else %}
+                            <!-- New grade: empty input fields -->
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="daily_{{ enrollment.student_id }}"
+                                       class="form-control form-control-sm score-input"
+                                       placeholder="平时成绩">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="midterm_{{ enrollment.student_id }}"
+                                       class="form-control form-control-sm score-input"
+                                       placeholder="期中成绩">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="final_{{ enrollment.student_id }}"
+                                       class="form-control form-control-sm score-input"
+                                       placeholder="期末成绩">
+                            </td>
+                            <td>
+                                <input type="text" readonly
+                                       class="form-control form-control-sm bg-light text-center">
+                            </td>
+                            <td>
+                                <input type="text" readonly
+                                       class="form-control form-control-sm bg-light text-center">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" max="100"
+                                       name="makeup_{{ enrollment.student_id }}"
+                                       class="form-control form-control-sm"
+                                       placeholder="补考成绩">
+                            </td>
+                            <td>
+                                <select name="status_{{ enrollment.student_id }}" class="form-select form-select-sm">
+                                    <option value="正常" selected>正常</option>
+                                    <option value="补考">补考</option>
+                                    <option value="重修">重修</option>
+                                    <option value="缓考">缓考</option>
+                                    <option value="缺考">缺考</option>
+                                </select>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <a href="{{ url_for('grade.list_offerings_for_grade') }}" class="btn btn-secondary me-2">
+                    <i class="bi bi-arrow-left"></i> 返回列表
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> 保存成绩
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 该课程目前没有已选课的学生（可能均已退课或尚无选课记录）。
+        </div>
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('grade.list_offerings_for_grade') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#gradeTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/zh.json'
+        },
+        paging: false,
+        searching: false,
+        ordering: true,
+        info: true
+    });
+});
+</script>
+{% endblock %}

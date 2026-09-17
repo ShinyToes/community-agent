@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{% if course %}编辑课程{% else %}新增课程{% endif %}{% endblock %}
+{% block page_title %}{% if course %}编辑课程{% else %}新增课程{% endif %}{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST"
+                      action="{% if course %}
+                              {{ url_for('course.edit_course', course_id=course.course_id) }}
+                              {% else %}
+                              {{ url_for('course.create_course') }}
+                              {% endif %}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="course_code" class="form-label">课程代码 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="course_code" name="course_code"
+                                   value="{{ course.course_code if course else '' }}" required maxlength="20">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="course_name" class="form-label">课程名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="course_name" name="course_name"
+                                   value="{{ course.course_name if course else '' }}" required maxlength="100">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="credits" class="form-label">学分 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="credits" name="credits"
+                                   value="{{ course.credits if course else '' }}"
+                                   step="0.5" min="0" max="20" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="hours" class="form-label">学时 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="hours" name="hours"
+                                   value="{{ course.hours if course else '' }}"
+                                   min="0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="course_type" class="form-label">课程类型 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="course_type" name="course_type" required>
+                                <option value="">请选择</option>
+                                <option value="必修" {% if course and course.course_type == '必修' %}selected{% endif %}>必修</option>
+                                <option value="选修" {% if course and course.course_type == '选修' %}selected{% endif %}>选修</option>
+                                <option value="公选" {% if course and course.course_type == '公选' %}selected{% endif %}>公选</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="department" class="form-label">开课院系</label>
+                            <input type="text" class="form-control" id="department" name="department"
+                                   value="{{ course.department if course else '' }}" maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="college_id" class="form-label">所属学院</label>
+                            <select class="form-select" id="college_id" name="college_id">
+                                <option value="">请选择</option>
+                                {% for col in colleges %}
+                                <option value="{{ col.college_id }}"
+                                        {% if course and course.college_id == col.college_id %}selected{% endif %}>
+                                    {{ col.college_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">课程描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                                  maxlength="2000">{{ course.description if course else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="syllabus" class="form-label">教学大纲文件</label>
+                        <input type="file" class="form-control" id="syllabus" name="syllabus" accept=".pdf,.doc,.docx">
+                        {% if course and course.syllabus %}
+                        <div class="form-text">当前文件: {{ course.syllabus }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 保存
+                        </button>
+                        <a href="{{ url_for('course.list_courses') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg"></i> 取消
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

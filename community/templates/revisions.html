@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}版本历史 · Community{% endblock %}
+{% block content %}
+<a href="{{ url_for('posts.detail', post_id=post.id) }}">← 返回当前帖子</a><h1>版本历史</h1><p class="muted">仅作者可见。每次保存保留完整正文与标签快照。</p>
+{% for revision in revisions %}
+<details class="revision-card"><summary>版本 {{ revision.revision_no }} · {{ revision.title }} <span class="muted">{{ revision.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</span></summary><p>{{ revision.change_reason }}</p><div class="tags">{% for tag in revision.tags %}<span># {{ tag }}</span>{% endfor %}</div><div class="markdown-body">{{ render_markdown(revision.markdown) }}</div></details>
+{% endfor %}
+{% if next_before %}<a href="{{ url_for('posts.revisions', post_id=post.id, before=next_before) }}">更早的版本</a>{% endif %}
+{% endblock %}

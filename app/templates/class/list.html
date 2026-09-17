@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}班级管理{% endblock %}
+{% block page_title %}班级管理{% endblock %}
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('class.create_class') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增班级
+    </a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>班级名称</th><th>年级</th>
+                    <th>所属专业</th><th>班主任/辅导员</th><th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in classes %}
+                <tr>
+                    <td>{{ c.class_id }}</td><td>{{ c.class_name }}</td>
+                    <td>{{ c.grade }}级</td><td>{{ c.major.major_name }}</td>
+                    <td>{{ c.counselor or '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('class.edit_class', class_id=c.class_id) }}"
+                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                        <form method="POST" action="{{ url_for('class.delete_class', class_id=c.class_id) }}"
+                              style="display:inline" onsubmit="return confirm('确定删除该班级吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() { $('#dataTable').DataTable(); });
+</script>
+{% endblock %}

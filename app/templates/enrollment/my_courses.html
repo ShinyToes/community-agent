@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}我的选课{% endblock %}
+{% block page_title %}我的选课{% endblock %}
+{% block content %}
+
+{% if student_search %}
+<!-- Admin/Teacher: search by student ID -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('enrollment.my_enrollments') }}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="student_id" class="form-label">学号查询</label>
+                <input type="text" class="form-control" id="student_id" name="student_id"
+                       placeholder="请输入学号" value="{{ searched_id }}">
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> 查询</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if enrollments %}
+{% if student_search and searched_name %}
+<div class="alert alert-info"><i class="bi bi-person-check"></i> 学生：{{ searched_name }}（{{ searched_id }}）的选课记录</div>
+{% endif %}
+<div class="row">
+{% for e in enrollments %}
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">{{ e.offering.course.course_name if e.offering and e.offering.course else '未知课程' }}</span>
+                <span class="badge {% if e.status == '在修' %}bg-success
+                                   {% elif e.status == '退课' %}bg-secondary
+                                   {% elif e.status == '已通过' %}bg-primary
+                                   {% elif e.status == '未通过' %}bg-danger
+                                   {% else %}bg-warning{% endif %}">
+                    {{ e.status }}
+                </span>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-2">
+                    <tr>
+                        <td class="text-muted" style="width: 90px;">选课编号</td>
+                        <td>{{ e.enrollment_id }}</td>
+                    </tr>
+                    {% if student_search %}
+                    <tr>
+                        <td class="text-muted">学号</td>
+                        <td>{{ e.student_id }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="text-muted">课程代码</td>
+                        <td>{{ e.offering.course.course_code if e.offering and e.offering.course else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">授课教师</td>
+                        <td>{{ e.offering.teacher.name if e.offering and e.offering.teacher else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">时间安排</td>
+                        <td>{{ e.offering.schedule if e.offering else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">教室</td>
+                        <td>{{ e.offering.classroom if e.offering else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">选课日期</td>
+                        <td>{{ e.enroll_date.strftime('%Y-%m-%d') if e.enroll_date else '-' }}</td>
+                    </tr>
+                </table>
+
+                {% if current_user.role == 'student' and e.status == '在修' %}
+                <form method="POST" action="{{ url_for('enrollment.drop_enrollment', enrollment_id=e.enrollment_id) }}"
+                      onsubmit="return confirm('确定退选该课程吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-circle"></i> 退课
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    {% if student_search and searched_id %}
+    未找到该学生的选课记录。
+    {% elif student_search %}
+    请输入学号查询选课记录。
+    {% else %}
+    暂无选课记录。
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

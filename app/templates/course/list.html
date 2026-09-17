@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}课程管理{% endblock %}
+{% block page_title %}课程管理{% endblock %}
+{% block content %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('course.list_courses') }}" class="row g-2">
+            <div class="col-md-3">
+                <select name="course_type" class="form-select">
+                    <option value="">全部课程类型</option>
+                    <option value="必修" {% if course_type_filter == '必修' %}selected{% endif %}>必修</option>
+                    <option value="选修" {% if course_type_filter == '选修' %}selected{% endif %}>选修</option>
+                    <option value="公选" {% if course_type_filter == '公选' %}selected{% endif %}>公选</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="department" class="form-control" placeholder="院系筛选"
+                       value="{{ department_filter }}">
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel"></i> 筛选</button>
+                <a href="{{ url_for('course.list_courses') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mb-3">
+    {% if current_user.role in ('admin', 'teacher') %}
+    <a href="{{ url_for('course.create_course') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增课程
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>课程代码</th>
+                    <th>课程名称</th>
+                    <th>学分</th>
+                    <th>学时</th>
+                    <th>课程类型</th>
+                    <th>开课院系</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in courses %}
+                <tr>
+                    <td>{{ c.course_id }}</td>
+                    <td>{{ c.course_code }}</td>
+                    <td>{{ c.course_name }}</td>
+                    <td>{{ c.credits }}</td>
+                    <td>{{ c.hours }}</td>
+                    <td>
+                        <span class="badge {% if c.course_type == '必修' %}bg-danger
+                                           {% elif c.course_type == '选修' %}bg-primary
+                                           {% else %}bg-success{% endif %}">
+                            {{ c.course_type }}
+                        </span>
+                    </td>
+                    <td>{{ c.department or '-' }}</td>
+                    <td>
+                        {% if current_user.role in ('admin', 'teacher') %}
+                        <a href="{{ url_for('course.edit_course', course_id=c.course_id) }}"
+                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                        {% endif %}
+                        {% if current_user.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('course.delete_course', course_id=c.course_id) }}"
+                              style="display:inline" onsubmit="return confirm('确定删除该课程吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/zh.json'
+        }
+    });
+});
+</script>
+{% endblock %}

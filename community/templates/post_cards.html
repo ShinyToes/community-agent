@@ -1,0 +1,12 @@
+<div class="post-list">
+{% for item in posts %}
+  <article class="post-card">
+    <div class="post-meta"><span>{{ item.author }}</span><span>{{ item.published_at[:16]|replace('T',' ') if item.published_at else '仅自己可见' }}{% if item.published_at %} UTC{% endif %}</span><span class="pill">{{ '草稿' if item.status == 'draft' else '已发布' }}</span></div>
+    <h2><a href="{{ url_for('posts.detail', post_id=item.id) }}">{{ item.title }}</a></h2>
+    <p class="excerpt">{{ item.excerpt }}</p>
+    <div class="tags">{% for tag in item.tags %}<span># {{ tag }}</span>{% endfor %}</div>
+  </article>
+{% else %}
+  <section class="empty-state"><h2>从一篇笔记开始。</h2><p>这里还没有帖子。保存草稿只对自己可见，点击发布后大家才能看到。</p></section>
+{% endfor %}
+</div>

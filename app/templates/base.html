@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}教务管理系统{% endblock %}</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-mortarboard-fill"></i> 教务管理系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                            <span class="badge bg-light text-primary ms-1">
+                                {% if current_user.role == 'admin' %}管理员{% else %}学生{% endif %}
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text text-muted small">
+                                角色: {% if current_user.role == 'admin' %}管理员{% else %}学生{% endif %}
+                            </span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><form method="POST" action="{{ url_for('auth.logout') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right"></i> 退出登录</button>
+                            </form></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            {% if current_user.is_authenticated %}
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('agent.workspace') }}">智能助手</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('index') }}">
+                                <i class="bi bi-speedometer2"></i> 仪表盘
+                            </a>
+                        </li>
+
+                        {% if current_user.role == 'admin' %}
+                        <!-- ========== 管理员菜单 ========== -->
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">基础数据管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('college.list_colleges') }}">
+                                <i class="bi bi-building"></i> 学院管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('major.list_majors') }}">
+                                <i class="bi bi-journal-bookmark"></i> 专业管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('class.list_classes') }}">
+                                <i class="bi bi-people"></i> 班级管理
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">学生管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('student.list_students') }}">
+                                <i class="bi bi-person-lines-fill"></i> 学生信息管理
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">专业变更</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('major_change.list_changes') }}">
+                                <i class="bi bi-arrow-left-right"></i> 变更历史
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('major_change.approve_queue') }}">
+                                <i class="bi bi-check-circle"></i> 审批管理
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">奖惩管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('reward_punish.list_records') }}">
+                                <i class="bi bi-trophy"></i> 奖惩记录
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('reward_punish.stats') }}">
+                                <i class="bi bi-bar-chart"></i> 奖惩统计
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">课程管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('course.list_courses') }}">
+                                <i class="bi bi-book"></i> 课程信息
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('course.list_offerings') }}">
+                                <i class="bi bi-calendar-check"></i> 开课管理
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">选课管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('enrollment.my_enrollments') }}">
+                                <i class="bi bi-list-check"></i> 选课查询
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">成绩管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('grade.list_offerings_for_grade') }}">
+                                <i class="bi bi-pencil-square"></i> 成绩录入
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('grade.my_grades') }}">
+                                <i class="bi bi-card-text"></i> 成绩查询
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('grade.transcript') }}">
+                                <i class="bi bi-file-earmark-text"></i> 成绩单
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">体检管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('physical_exam.list_exams') }}">
+                                <i class="bi bi-heart-pulse"></i> 体检记录
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('physical_exam.stats') }}">
+                                <i class="bi bi-graph-up"></i> 体检统计
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">统计报表</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('statistics.student_status') }}">
+                                <i class="bi bi-pie-chart"></i> 学生概况
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('statistics.grade_distribution') }}">
+                                <i class="bi bi-bar-chart-line"></i> 成绩分布
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('statistics.graduation_audit') }}">
+                                <i class="bi bi-clipboard-check"></i> 毕业审核
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">系统管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('audit.list_logs') }}">
+                                <i class="bi bi-journal-text"></i> 操作日志
+                            </a>
+                        </li>
+
+                        {% elif current_user.role == 'student' %}
+                        <!-- ========== 学生菜单 ========== -->
+                        {% if current_user.related_id %}
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">个人信息</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('student.detail_student', student_id=current_user.related_id) }}">
+                                <i class="bi bi-person-circle"></i> 我的信息
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">专业变更</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('major_change.apply_change') }}">
+                                <i class="bi bi-arrow-left-right"></i> 专业变更申请
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('major_change.list_changes') }}">
+                                <i class="bi bi-clock-history"></i> 变更历史
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">奖惩管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('reward_punish.list_records') }}">
+                                <i class="bi bi-trophy"></i> 奖惩记录
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">选课管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('enrollment.available_courses') }}">
+                                <i class="bi bi-plus-circle"></i> 可选课程
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('enrollment.my_enrollments') }}">
+                                <i class="bi bi-list-check"></i> 我的选课
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">成绩管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('grade.my_grades') }}">
+                                <i class="bi bi-card-text"></i> 我的成绩
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('grade.transcript') }}">
+                                <i class="bi bi-file-earmark-text"></i> 成绩单
+                            </a>
+                        </li>
+
+                        <li class="nav-item sidebar-heading">
+                            <span class="nav-link text-muted fw-bold small">体检管理</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('physical_exam.list_exams') }}">
+                                <i class="bi bi-heart-pulse"></i> 体检记录
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- 主内容区 -->
+            <main class="{% if current_user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4">
+                <div class="pt-3 pb-2 mb-3">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+
+                    <h2 class="border-bottom pb-2">{% block page_title %}{% endblock %}</h2>
+                    {% block breadcrumb %}{% endblock %}
+                </div>
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5.3 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery (DataTables 依赖) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

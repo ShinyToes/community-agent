@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{% if exam %}编辑体检记录{% else %}新增体检记录{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">{% if exam %}编辑体检记录{% else %}新增体检记录{% endif %}</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="student_id" class="form-label">学生学号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="student_id" name="student_id" required
+                               value="{{ exam.student_id if exam else '' }}" placeholder="请输入学号">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="exam_date" class="form-label">体检日期 <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="exam_date" name="exam_date" required
+                               value="{{ exam.exam_date.strftime('%Y-%m-%d') if exam and exam.exam_date else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="height" class="form-label">身高 (cm)</label>
+                        <input type="number" class="form-control" id="height" name="height"
+                               step="0.1" min="50" max="250"
+                               value="{{ exam.height if exam else '' }}" placeholder="如: 170.0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="weight" class="form-label">体重 (kg)</label>
+                        <input type="number" class="form-control" id="weight" name="weight"
+                               step="0.1" min="20" max="300"
+                               value="{{ exam.weight if exam else '' }}" placeholder="如: 65.0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="vision_left" class="form-label">左眼视力</label>
+                        <input type="number" class="form-control" id="vision_left" name="vision_left"
+                               step="0.1" min="0.1" max="5.3"
+                               value="{{ exam.vision_left if exam else '' }}" placeholder="如: 5.0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="vision_right" class="form-label">右眼视力</label>
+                        <input type="number" class="form-control" id="vision_right" name="vision_right"
+                               step="0.1" min="0.1" max="5.3"
+                               value="{{ exam.vision_right if exam else '' }}" placeholder="如: 5.0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="blood_type" class="form-label">血型</label>
+                        <select class="form-select" id="blood_type" name="blood_type">
+                            <option value="">请选择血型</option>
+                            <option value="A" {% if exam and exam.blood_type == 'A' %}selected{% endif %}>A型</option>
+                            <option value="B" {% if exam and exam.blood_type == 'B' %}selected{% endif %}>B型</option>
+                            <option value="AB" {% if exam and exam.blood_type == 'AB' %}selected{% endif %}>AB型</option>
+                            <option value="O" {% if exam and exam.blood_type == 'O' %}selected{% endif %}>O型</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="health_status" class="form-label">健康状况</label>
+                        <select class="form-select" id="health_status" name="health_status">
+                            <option value="">请选择健康状况</option>
+                            <option value="健康" {% if exam and exam.health_status == '健康' %}selected{% endif %}>健康</option>
+                            <option value="良好" {% if exam and exam.health_status == '良好' %}selected{% endif %}>良好</option>
+                            <option value="一般" {% if exam and exam.health_status == '一般' %}selected{% endif %}>一般</option>
+                            <option value="较差" {% if exam and exam.health_status == '较差' %}selected{% endif %}>较差</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="hospital" class="form-label">体检医院</label>
+                        <input type="text" class="form-control" id="hospital" name="hospital"
+                               value="{{ exam.hospital if exam else '' }}" placeholder="如: 市第一人民医院">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="report_file" class="form-label">体检报告</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control file-input" id="report_file" name="report_file">
+                            <span class="input-group-text file-name">
+                                {% if exam and exam.report_file %}{{ exam.report_file }}{% else %}未选择文件{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> {% if exam %}更新{% else %}保存{% endif %}
+                    </button>
+                    <a href="{{ url_for('physical_exam.list_exams') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> 取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

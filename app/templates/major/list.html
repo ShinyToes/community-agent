@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}专业管理{% endblock %}
+{% block page_title %}专业管理{% endblock %}
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('major.create_major') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增专业
+    </a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>专业代码</th><th>专业名称</th>
+                    <th>所属学院</th><th>学制</th><th>学位类型</th><th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in majors %}
+                <tr>
+                    <td>{{ m.major_id }}</td><td>{{ m.major_code }}</td>
+                    <td>{{ m.major_name }}</td><td>{{ m.college.college_name }}</td>
+                    <td>{{ m.duration }} 年</td><td>{{ m.degree_type }}</td>
+                    <td>
+                        <a href="{{ url_for('major.edit_major', major_id=m.major_id) }}"
+                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                        <form method="POST" action="{{ url_for('major.delete_major', major_id=m.major_id) }}"
+                              style="display:inline" onsubmit="return confirm('确定删除该专业吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() { $('#dataTable').DataTable(); });
+</script>
+{% endblock %}

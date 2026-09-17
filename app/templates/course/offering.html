@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}开课管理{% endblock %}
+{% block page_title %}开课管理{% endblock %}
+{% block content %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('course.list_offerings') }}" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="academic_year" class="form-control" placeholder="学年 (如 2025-2026)"
+                       value="{{ academic_year_filter }}">
+            </div>
+            <div class="col-md-3">
+                <select name="semester" class="form-select">
+                    <option value="">全部学期</option>
+                    <option value="第一学期" {% if semester_filter == '第一学期' %}selected{% endif %}>第一学期</option>
+                    <option value="第二学期" {% if semester_filter == '第二学期' %}selected{% endif %}>第二学期</option>
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-funnel"></i> 筛选</button>
+                <a href="{{ url_for('course.list_offerings') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mb-3">
+    {% if current_user.role in ('admin', 'teacher') %}
+    <a href="{{ url_for('course.create_offering') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增开课
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>课程名称</th>
+                    <th>授课教师</th>
+                    <th>学年</th>
+                    <th>学期</th>
+                    <th>教室</th>
+                    <th>时间安排</th>
+                    <th>选课容量</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in offerings %}
+                <tr>
+                    <td>{{ o.offering_id }}</td>
+                    <td>{{ o.course.course_name if o.course else '-' }}</td>
+                    <td>{{ o.teacher.name if o.teacher else '-' }}</td>
+                    <td>{{ o.academic_year }}</td>
+                    <td>{{ o.semester }}</td>
+                    <td>{{ o.classroom or '-' }}</td>
+                    <td>{{ o.schedule or '-' }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2 small">{{ o.cur_students }}/{{ o.max_students }}</span>
+                            {% set pct = (o.cur_students / o.max_students * 100) if o.max_students > 0 else 0 %}
+                            <div class="progress flex-grow-1" style="height: 6px;">
+                                <div class="progress-bar {% if pct >= 90 %}bg-danger
+                                                       {% elif pct >= 70 %}bg-warning
+                                                       {% else %}bg-success{% endif %}"
+                                     role="progressbar" style="width: {{ pct }}%"
+                                     aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if current_user.role in ('admin', 'teacher') %}
+                        <a href="{{ url_for('course.edit_offering', offering_id=o.offering_id) }}"
+                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                        {% endif %}
+                        {% if current_user.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('course.delete_offering', offering_id=o.offering_id) }}"
+                              style="display:inline" onsubmit="return confirm('确定删除该开课信息吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/zh.json'
+        }
+    });
+});
+</script>
+{% endblock %}

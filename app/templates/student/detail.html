@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }} - 学生详情{% endblock %}
+{% block page_title %}学生详情 - {{ student.name }}{% endblock %}
+
+{% block content %}
+<!-- 个人信息卡片 -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                {% if student.photo %}
+                <img src="{{ url_for('file.student_photo', student_id=student.student_id) }}"
+                     class="rounded border" style="width:100px; height:130px; object-fit:cover;"
+                     alt="{{ student.name }}">
+                {% else %}
+                <div class="rounded border d-flex align-items-center justify-content-center bg-light"
+                     style="width:100px; height:130px;">
+                    <i class="bi bi-person-fill" style="font-size:3rem; color:#ccc;"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col">
+                <h4 class="mb-1">{{ student.name }}</h4>
+                <div class="text-muted mb-1">
+                    <span class="me-3"><i class="bi bi-card-heading"></i> {{ student.student_id }}</span>
+                    <span class="me-3"><i class="bi bi-gender-{% if student.gender == 'M' %}male{% else %}female{% endif %}"></i> {{ '男' if student.gender == 'M' else '女' }}</span>
+                    <span>{{ get_status_badge(student.status)|safe }}</span>
+                </div>
+                <div class="text-muted">
+                    <span class="me-3"><i class="bi bi-journal-bookmark"></i> {{ student.major.major_name if student.major else '-' }}</span>
+                    <span><i class="bi bi-people"></i> {{ student.class_.class_name if student.class_ else '-' }}</span>
+                </div>
+            </div>
+            <div class="col-auto">
+                {% if current_user.role in ('admin', 'counselor') %}
+                <a href="{{ url_for('student.edit_student', student_id=student.student_id) }}"
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil"></i> 编辑信息
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 标签页 -->
+<ul class="nav nav-tabs mb-3" id="studentTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button"
+                role="tab" aria-controls="info" aria-selected="true">
+            <i class="bi bi-info-circle"></i> 基本信息
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="enrollments-tab" data-bs-toggle="tab" data-bs-target="#enrollments" type="button"
+                role="tab" aria-controls="enrollments" aria-selected="false">
+            <i class="bi bi-list-check"></i> 选课记录
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades" type="button"
+                role="tab" aria-controls="grades" aria-selected="false">
+            <i class="bi bi-card-text"></i> 成绩
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="rewards-tab" data-bs-toggle="tab" data-bs-target="#rewards" type="button"
+                role="tab" aria-controls="rewards" aria-selected="false">
+            <i class="bi bi-trophy"></i> 奖惩
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="exams-tab" data-bs-toggle="tab" data-bs-target="#exams" type="button"
+                role="tab" aria-controls="exams" aria-selected="false">
+            <i class="bi bi-heart-pulse"></i> 体检
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="major-changes-tab" data-bs-toggle="tab" data-bs-target="#majorChanges" type="button"
+                role="tab" aria-controls="majorChanges" aria-selected="false">
+            <i class="bi bi-arrow-left-right"></i> 专业变更
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="files-tab" data-bs-toggle="tab" data-bs-target="#files" type="button"
+                role="tab" aria-controls="files" aria-selected="false">
+            <i class="bi bi-paperclip"></i> 附件
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="studentTabsContent">
+    <!-- 基本信息 Tab -->
+    <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr><th class="w-25">学号</th><td>{{ student.student_id }}</td></tr>
+                            <tr><th>姓名</th><td>{{ student.name }}</td></tr>
+                            <tr><th>性别</th><td>{{ '男' if student.gender == 'M' else '女' }}</td></tr>
+                            <tr><th>出生日期</th><td>{{ student.birth_date if student.birth_date else '-' }}</td></tr>
+                            <tr><th>身份证号</th><td>{{ student.id_card or '-' }}</td></tr>
+                            <tr><th>民族</th><td>{{ student.ethnicity or '-' }}</td></tr>
+                            <tr><th>政治面貌</th><td>{{ student.political_status or '-' }}</td></tr>
+                            <tr><th>籍贯</th><td>{{ student.native_place or '-' }}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr><th class="w-25">手机号</th><td>{{ student.phone or '-' }}</td></tr>
+                            <tr><th>邮箱</th><td>{{ student.email or '-' }}</td></tr>
+                            <tr><th>家庭住址</th><td>{{ student.home_address or '-' }}</td></tr>
+                            <tr><th>入学年份</th><td>{{ student.enrollment_year }}</td></tr>
+                            <tr><th>学制</th><td>{{ student.education_length }} 年</td></tr>
+                            <tr><th>学历层次</th><td>{{ student.education_level }}</td></tr>
+                            <tr><th>学籍状态</th><td>{{ get_status_badge(student.status)|safe }}</td></tr>
+                            <tr><th>所属专业</th><td>{{ student.major.major_name if student.major else '-' }}</td></tr>
+                            <tr><th>所属班级</th><td>{{ student.class_.class_name if student.class_ else '-' }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 选课记录 Tab -->
+    <div class="tab-pane fade" id="enrollments" role="tabpanel" aria-labelledby="enrollments-tab">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>课程名称</th>
+                            <th>学年学期</th>
+                            <th>选课日期</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enr in student.enrollments %}
+                        <tr>
+                            <td>{{ enr.enrollment_id }}</td>
+                            <td>{{ enr.offering.course.course_name if (enr.offering and enr.offering.course) else '-' }}</td>
+                            <td>{{ (enr.offering.academic_year + ' ' + enr.offering.semester) if enr.offering else '-' }}</td>
+                            <td>{{ enr.enroll_date.strftime('%Y-%m-%d') if enr.enroll_date else '-' }}</td>
+                            <td>{{ get_status_badge(enr.status)|safe }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not student.enrollments.count() %}
+                        <tr><td colspan="5" class="text-center text-muted">暂无选课记录</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成绩 Tab -->
+    <div class="tab-pane fade" id="grades" role="tabpanel" aria-labelledby="grades-tab">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>课程名称</th>
+                            <th>平时成绩</th>
+                            <th>期中成绩</th>
+                            <th>期末成绩</th>
+                            <th>总评成绩</th>
+                            <th>GPA</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enr in student.enrollments %}
+                        {% if enr.grade %}
+                        <tr>
+                            <td>{{ enr.offering.course.course_name if (enr.offering and enr.offering.course) else '-' }}</td>
+                            <td>{{ enr.grade.daily_score if enr.grade.daily_score is not none else '-' }}</td>
+                            <td>{{ enr.grade.midterm_score if enr.grade.midterm_score is not none else '-' }}</td>
+                            <td>{{ enr.grade.final_score if enr.grade.final_score is not none else '-' }}</td>
+                            <td>{{ enr.grade.total_score if enr.grade.total_score is not none else '-' }}</td>
+                            <td>{{ enr.grade.gpa if enr.grade.gpa is not none else '-' }}</td>
+                            <td>{{ get_status_badge(enr.grade.status)|safe }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                        {% if not grades_exist %}
+                        <tr><td colspan="7" class="text-center text-muted">暂无成绩记录</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 奖惩 Tab -->
+    <div class="tab-pane fade" id="rewards" role="tabpanel" aria-labelledby="rewards-tab">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>类型</th>
+                            <th>标题</th>
+                            <th>级别</th>
+                            <th>日期</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rp in student.reward_punishments %}
+                        <tr>
+                            <td>{{ get_status_badge(rp.type)|safe }}</td>
+                            <td>{{ rp.title }}</td>
+                            <td>{{ rp.level or '-' }}</td>
+                            <td>{{ rp.rp_date if rp.rp_date else '-' }}</td>
+                            <td>{{ rp.description or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not student.reward_punishments.count() %}
+                        <tr><td colspan="5" class="text-center text-muted">暂无奖惩记录</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 体检 Tab -->
+    <div class="tab-pane fade" id="exams" role="tabpanel" aria-labelledby="exams-tab">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>体检日期</th>
+                            <th>身高(cm)</th>
+                            <th>体重(kg)</th>
+                            <th>左眼视力</th>
+                            <th>右眼视力</th>
+                            <th>血型</th>
+                            <th>健康状况</th>
+                            <th>体检医院</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in student.physical_exams %}
+                        <tr>
+                            <td>{{ exam.exam_date if exam.exam_date else '-' }}</td>
+                            <td>{{ exam.height if exam.height is not none else '-' }}</td>
+                            <td>{{ exam.weight if exam.weight is not none else '-' }}</td>
+                            <td>{{ exam.vision_left if exam.vision_left is not none else '-' }}</td>
+                            <td>{{ exam.vision_right if exam.vision_right is not none else '-' }}</td>
+                            <td>{{ exam.blood_type or '-' }}</td>
+                            <td>{{ exam.health_status or '-' }}</td>
+                            <td>{{ exam.hospital or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not student.physical_exams.count() %}
+                        <tr><td colspan="8" class="text-center text-muted">暂无体检记录</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 专业变更 Tab -->
+    <div class="tab-pane fade" id="majorChanges" role="tabpanel" aria-labelledby="major-changes-tab">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>变更日期</th>
+                            <th>原专业</th>
+                            <th>新专业</th>
+                            <th>变更原因</th>
+                            <th>审批状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mc in student.major_changes %}
+                        <tr>
+                            <td>{{ mc.change_date if mc.change_date else '-' }}</td>
+                            <td>{{ mc.old_major.major_name if mc.old_major else '-' }}</td>
+                            <td>{{ mc.new_major.major_name if mc.new_major else '-' }}</td>
+                            <td>{{ mc.reason or '-' }}</td>
+                            <td>{{ get_status_badge(mc.approval_status)|safe }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not student.major_changes.count() %}
+                        <tr><td colspan="5" class="text-center text-muted">暂无专业变更记录</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 附件 Tab -->
+    <div class="tab-pane fade" id="files" role="tabpanel" aria-labelledby="files-tab">
+        <div class="card">
+            <div class="card-body">
+                {% if current_user.role in ('admin', 'counselor') %}
+                <div class="mb-3">
+                    <form method="POST" action="{{ url_for('file.upload_file', table='student', record_id=student.student_id) }}"
+                          enctype="multipart/form-data" class="row g-2 align-items-end">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="col-auto">
+                            <input type="file" class="form-control" name="file" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cloud-upload"></i> 上传附件
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>文件名</th>
+                            <th>类型</th>
+                            <th>大小</th>
+                            <th>上传时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileListBody">
+                        {% for f in files %}
+                        <tr data-file-id="{{ f.file_id }}">
+                            <td><i class="bi bi-file-earmark"></i> {{ f.file_name }}</td>
+                            <td>{{ f.file_type }}</td>
+                            <td>
+                                {% if f.file_size %}
+                                    {% if f.file_size < 1024 %}
+                                        {{ f.file_size }} B
+                                    {% elif f.file_size < 1048576 %}
+                                        {{ '%.1f'|format(f.file_size / 1024) }} KB
+                                    {% else %}
+                                        {{ '%.1f'|format(f.file_size / 1048576) }} MB
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ f.upload_time.strftime('%Y-%m-%d %H:%M') if f.upload_time else '-' }}</td>
+                            <td>
+                                <a href="{{ url_for('file.download_file', file_id=f.file_id) }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-download"></i> 下载
+                                </a>
+                                {% if current_user.role in ('admin', 'counselor') %}
+                                <button class="btn btn-sm btn-outline-danger delete-file-btn" data-file-id="{{ f.file_id }}">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not files %}
+                        <tr id="noFilesRow"><td colspan="5" class="text-center text-muted">暂无附件</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('student.list_students') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// File delete via AJAX
+document.querySelectorAll('.delete-file-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        if (!confirm('确定删除该文件吗？')) return;
+        var fileId = this.getAttribute('data-file-id');
+        var row = this.closest('tr');
+        fetch('{{ url_for("file.delete_file", file_id=999999) }}'.replace('999999', fileId), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': {{ csrf_token()|tojson }}
+            }
+        })
+        .then(function (resp) { return resp.json(); })
+        .then(function (data) {
+            if (data.success) {
+                row.remove();
+                // Show "no files" if table is now empty
+                var tbody = document.getElementById('fileListBody');
+                if (tbody.querySelectorAll('tr').length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无附件</td></tr>';
+                }
+            } else {
+                alert('删除失败: ' + data.message);
+            }
+        })
+        .catch(function (err) {
+            alert('请求失败: ' + err);
+        });
+    });
+});
+</script>
+{% endblock %}

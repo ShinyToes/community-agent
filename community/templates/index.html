@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="feed-heading">
+  <div><p class="eyebrow">学习 · 记录 · 交流</p><h1>每一次探索，都值得分享。</h1>
+  <p class="intro">写下你的技术笔记、问题与项目，让想法在交流中生长。</p></div>
+  {% if current_user.is_authenticated %}<a class="button" href="{{ url_for('posts.new') }}">写一篇帖子 ↗</a>
+  {% else %}<a class="button" href="{{ url_for('auth.register') }}">创建你的账号 ↗</a>{% endif %}
+</section>
+<div class="section-heading"><h2>最新发布</h2><span>按发布时间排列</span></div>
+{% include 'post_cards.html' %}
+{% if next_cursor %}<a class="button secondary" href="{{ url_for('posts.feed', cursor=next_cursor) }}">下一页</a>{% endif %}
+{% endblock %}

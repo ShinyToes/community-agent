@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}学生信息管理{% endblock %}
+{% block page_title %}学生信息管理{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('student.list_students') }}" class="row g-3">
+            <div class="col-md-2">
+                <input type="text" class="form-control" name="q" placeholder="搜索学号/姓名/电话"
+                       value="{{ search_params.q if search_params else '' }}">
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="major_id">
+                    <option value="">全部专业</option>
+                    {% for m in majors %}
+                    <option value="{{ m.major_id }}"
+                        {% if search_params and search_params.major_id == m.major_id|string %}selected{% endif %}>
+                        {{ m.major_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="class_id">
+                    <option value="">全部班级</option>
+                    {% for c in classes %}
+                    <option value="{{ c.class_id }}"
+                        {% if search_params and search_params.class_id == c.class_id|string %}selected{% endif %}>
+                        {{ c.class_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="status">
+                    <option value="">全部状态</option>
+                    <option value="在读" {% if search_params and search_params.status == '在读' %}selected{% endif %}>在读</option>
+                    <option value="休学" {% if search_params and search_params.status == '休学' %}selected{% endif %}>休学</option>
+                    <option value="退学" {% if search_params and search_params.status == '退学' %}selected{% endif %}>退学</option>
+                    <option value="毕业" {% if search_params and search_params.status == '毕业' %}selected{% endif %}>毕业</option>
+                    <option value="肄业" {% if search_params and search_params.status == '肄业' %}selected{% endif %}>肄业</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="enrollment_year">
+                    <option value="">全部年级</option>
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if search_params and search_params.enrollment_year == y|string %}selected{% endif %}>{{ y }}级</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+            </div>
+            <div class="col-md-1">
+                <a href="{{ url_for('student.list_students') }}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-counterclockwise"></i> 重置
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if current_user.role in ('admin', 'counselor') %}
+<div class="mb-3">
+    <a href="{{ url_for('student.create_student') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增学生
+    </a>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>性别</th>
+                    <th>专业</th>
+                    <th>班级</th>
+                    <th>学籍状态</th>
+                    <th>手机号</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td>{{ s.student_id }}</td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ '男' if s.gender == 'M' else '女' }}</td>
+                    <td>{{ s.major.major_name if s.major else '-' }}</td>
+                    <td>{{ s.class_.class_name if s.class_ else '-' }}</td>
+                    <td>{{ get_status_badge(s.status)|safe }}</td>
+                    <td>{{ s.phone or '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('student.detail_student', student_id=s.student_id) }}"
+                           class="btn btn-sm btn-outline-info" title="查看详情">
+                            <i class="bi bi-eye"></i> 详情
+                        </a>
+                        {% if current_user.role in ('admin', 'counselor') %}
+                        <a href="{{ url_for('student.edit_student', student_id=s.student_id) }}"
+                           class="btn btn-sm btn-outline-primary" title="编辑">
+                            <i class="bi bi-pencil"></i> 编辑
+                        </a>
+                        <form method="POST" action="{{ url_for('student.delete_student', student_id=s.student_id) }}"
+                              style="display:inline" onsubmit="return confirm('确定删除该学生吗？若存在在修课程则无法删除。')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="删除">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function () {
+    $('#dataTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/zh-Hans.json'
+        },
+        pageLength: 25,
+        order: [[0, 'asc']]
+    });
+});
+</script>
+{% endblock %}

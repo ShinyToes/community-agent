@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}转专业申请{% endblock %}
+{% block page_title %}转专业申请{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">学号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="student_id" id="student_id"
+                               required readonly value="{{ current_user.related_id }}">
+                        <div id="studentInfo" class="form-text mt-1"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">当前专业</label>
+                        <input type="text" class="form-control" id="current_major" readonly
+                               placeholder="输入学号后自动查询">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">目标专业 <span class="text-danger">*</span></label>
+                        <select class="form-select" name="new_major_id" id="new_major_id" required>
+                            <option value="">-- 请选择专业 --</option>
+                            {% for m in majors %}
+                            <option value="{{ m.major_id }}">{{ m.major_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">申请原因</label>
+                        <textarea class="form-control" name="reason" rows="4"
+                                  placeholder="请详细说明转专业的原因"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">附件</label>
+                        <input type="file" class="form-control" name="attachment">
+                        <div class="form-text">可上传相关证明材料（图片、PDF等）</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> 提交申请</button>
+                    <a href="{{ url_for('major_change.list_changes') }}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function fetchStudentInfo() {
+    var sid = document.getElementById('student_id').value.trim();
+    var infoDiv = document.getElementById('studentInfo');
+    var majorInput = document.getElementById('current_major');
+    if (!sid) { infoDiv.innerHTML = ''; majorInput.value = ''; resetMajorOptions(-1); return; }
+    infoDiv.innerHTML = '<span class="text-muted">查询中...</span>';
+    fetch('/students/api/students/' + encodeURIComponent(sid))
+        .then(function(res) { if (!res.ok) throw new Error(); return res.json(); })
+        .then(function(data) {
+            infoDiv.textContent = '当前学生: ' + data.name;
+            majorInput.value = data.major_name || '';
+            resetMajorOptions(data.major_id);
+        })
+        .catch(function() {
+            infoDiv.innerHTML = '<span class="text-danger">未找到该学生</span>';
+            majorInput.value = ''; resetMajorOptions(-1);
+        });
+}
+
+function resetMajorOptions(excludeId) {
+    var sel = document.getElementById('new_major_id');
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">-- 请选择专业 --</option>';
+    {% for m in majors %}
+    if ({{ m.major_id }} !== excludeId) {
+        var o = document.createElement('option');
+        o.value = '{{ m.major_id }}'; o.textContent = '{{ m.major_name }}';
+        if (o.value === cur) o.selected = true;
+        sel.appendChild(o);
+    }
+    {% endfor %}
+}
+
+fetchStudentInfo();
+</script>
+{% endblock %}

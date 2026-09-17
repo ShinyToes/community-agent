@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}奖惩统计{% endblock %}
+{% block page_title %}奖惩统计{% endblock %}
+{% block content %}
+<div class="row">
+    <!-- 饼图：奖励 vs 惩罚 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> 奖惩类型分布
+            </div>
+            <div class="card-body">
+                <canvas id="typePieChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- 柱状图：按级别 -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-bar-chart"></i> 按级别统计
+            </div>
+            <div class="card-body">
+                <canvas id="levelBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- 柱状图：按月份（当年） -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-month"></i> {{ now().year if now else '' }} 年按月统计
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// 饼图 — 奖惩类型分布
+fetch('{{ url_for("reward_punish.stats_summary") }}')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        var typeCtx = document.getElementById('typePieChart').getContext('2d');
+        new Chart(typeCtx, {
+            type: 'pie',
+            data: {
+                labels: data.type_labels,
+                datasets: [{
+                    label: '数量',
+                    data: data.type_values,
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                var pct = total > 0 ? Math.round(ctx.parsed / total * 100) : 0;
+                                return ctx.label + ': ' + ctx.parsed + ' 条 (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+// 柱状图 — 按级别统计
+fetch('{{ url_for("reward_punish.stats_summary") }}')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        var levelCtx = document.getElementById('levelBarChart').getContext('2d');
+        var colors = [
+            'rgba(13, 110, 253, 0.7)',
+            'rgba(111, 66, 193, 0.7)',
+            'rgba(253, 126, 20, 0.7)',
+            'rgba(25, 135, 84, 0.7)',
+            'rgba(108, 117, 125, 0.7)',
+            'rgba(214, 51, 132, 0.7)'
+        ];
+        new Chart(levelCtx, {
+            type: 'bar',
+            data: {
+                labels: data.level_labels,
+                datasets: [{
+                    label: '记录数量',
+                    data: data.level_values,
+                    backgroundColor: colors.slice(0, data.level_labels.length),
+                    borderColor: colors.slice(0, data.level_labels.length).map(function(c) {
+                        return c.replace('0.7', '1');
+                    }),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+
+// 柱状图 — 按月份统计（当前年份）
+fetch('{{ url_for("reward_punish.stats_by_month") }}')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        var monthCtx = document.getElementById('monthlyBarChart').getContext('2d');
+        new Chart(monthCtx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: '记录数量',
+                    data: data.values,
+                    backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

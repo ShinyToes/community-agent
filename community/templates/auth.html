@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{{ '加入社区' if register else '登录' }} · Community{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <p class="eyebrow">COMMUNITY</p>
+  <h1>{{ '开始你的社区旅程' if register else '欢迎回来' }}</h1>
+  <p>{{ '用一个账号，连接你的学习与分享。' if register else '登录后，继续你的探索。' }}</p>
+  <form method="post" action="{{ url_for('auth.register' if register else 'auth.login') }}" {% if register %}id="register-form" data-success-url="{{ url_for('index') }}"{% endif %}>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="username">用户名</label>
+    <input id="username" name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_]{3,32}" required value="{{ username|default('') }}" aria-describedby="username-help{% if register %} register-error{% endif %}" {% if form_error %}aria-invalid="true"{% endif %}>
+    <small id="username-help">3–32 位字母、数字或下划线，不区分大小写。</small>
+    {% if register %}<small id="register-error" class="form-error" role="alert" {% if not form_error %}hidden{% endif %}>{{ form_error|default('') }}</small>{% endif %}
+    <label for="password">密码</label>
+    <input id="password" name="password" type="password" autocomplete="{{ 'new-password' if register else 'current-password' }}" minlength="6" maxlength="128" required aria-describedby="password-help">
+    <small id="password-help">6–128 个字符。</small>
+    <button class="button full" type="submit">{{ '创建账号' if register else '登录' }}</button>
+  </form>
+  <p class="switch">{{ '已有账号？' if register else '还没有账号？' }} <a href="{{ url_for('auth.login' if register else 'auth.register') }}">{{ '去登录' if register else '加入社区' }}</a></p>
+</section>
+{% if register %}<script src="{{ url_for('static', filename='register.js') }}" defer></script>{% endif %}
+{% endblock %}

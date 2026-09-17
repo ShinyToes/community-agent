@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}我的成绩 - 学籍管理系统{% endblock %}
+{% block page_title %}我的成绩{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item active" aria-current="page">我的成绩</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label for="semester" class="form-label">学期筛选</label>
+                <select name="semester" id="semester" class="form-select">
+                    <option value="">全部学期</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem }}" {% if sem == current_semester %}selected{% endif %}>{{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> 筛选
+                </button>
+                {% if current_semester %}
+                <a href="{{ url_for('grade.my_grades') }}" class="btn btn-outline-secondary ms-1">
+                    <i class="bi bi-x-circle"></i> 清除
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Grades Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0"><i class="bi bi-card-text"></i> 成绩列表</h5>
+    </div>
+    <div class="card-body">
+        {% if enrollments %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle" id="myGradesTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>课程代码</th>
+                        <th>课程名称</th>
+                        <th>学分</th>
+                        <th>课程类型</th>
+                        <th>平时成绩</th>
+                        <th>期中成绩</th>
+                        <th>期末成绩</th>
+                        <th>总评成绩</th>
+                        <th>GPA</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in enrollments %}
+                    <tr>
+                        <td>{{ enrollment.offering.course.course_code }}</td>
+                        <td>{{ enrollment.offering.course.course_name }}</td>
+                        <td>{{ enrollment.offering.course.credits }}</td>
+                        <td>
+                            <span class="badge
+                                {% if enrollment.offering.course.course_type == '必修' %}bg-danger
+                                {% elif enrollment.offering.course.course_type == '选修' %}bg-success
+                                {% elif enrollment.offering.course.course_type == '公选' %}bg-info
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ enrollment.offering.course.course_type }}
+                            </span>
+                        </td>
+                        <td>{{ enrollment.grade.daily_score if enrollment.grade else '-' }}</td>
+                        <td>{{ enrollment.grade.midterm_score if enrollment.grade else '-' }}</td>
+                        <td>{{ enrollment.grade.final_score if enrollment.grade else '-' }}</td>
+                        <td>
+                            {% if enrollment.grade and enrollment.grade.total_score is not none %}
+                            <strong>{{ '%.1f'|format(enrollment.grade.total_score|float) }}</strong>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if enrollment.grade and enrollment.grade.gpa is not none %}
+                                {% set gpa = enrollment.grade.gpa %}
+                                <span class="fw-bold
+                                    {% if gpa >= 4.0 %}text-success
+                                    {% elif gpa >= 3.0 %}text-primary
+                                    {% elif gpa >= 2.0 %}text-warning
+                                    {% else %}text-danger
+                                    {% endif %}">
+                                    {{ gpa }}
+                                </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if enrollment.grade %}
+                                {% if enrollment.grade.status == '正常' %}
+                                <span class="badge bg-success">正常</span>
+                                {% elif enrollment.grade.status == '补考' %}
+                                <span class="badge bg-warning">补考</span>
+                                {% elif enrollment.grade.status == '重修' %}
+                                <span class="badge bg-danger">重修</span>
+                                {% elif enrollment.grade.status == '缺考' %}
+                                <span class="badge bg-secondary">缺考</span>
+                                {% elif enrollment.grade.status == '缓考' %}
+                                <span class="badge bg-info">缓考</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ enrollment.grade.status }}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="badge bg-light text-dark">未录入</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <!-- Summary Row -->
+                <tfoot class="table-secondary">
+                    <tr>
+                        <td colspan="7" class="text-end fw-bold">学期汇总：</td>
+                        <td>
+                            <strong>
+                                {% set sem_total = namespace(sum=0, credits=0) %}
+                                {% for enr in enrollments %}
+                                    {% if enr.grade and enr.grade.gpa is not none and enr.offering.course.credits is not none %}
+                                        {% set sem_total.sum = sem_total.sum + (enr.grade.gpa|float * enr.offering.course.credits|float) %}
+                                        {% set sem_total.credits = sem_total.credits + enr.offering.course.credits|float %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if sem_total.credits > 0 %}
+                                学期GPA: {{ '%.2f'|format(sem_total.sum / sem_total.credits) }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </strong>
+                        </td>
+                        <td colspan="2">
+                            <strong>总学分：{{ completed_credits or 0 }}</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Overall GPA Display -->
+        <div class="alert alert-primary mt-3">
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-star-fill text-warning"></i> 累计GPA</h5>
+                    <h3 class="fw-bold">{{ '%.2f'|format(student_gpa) if student_gpa is not none else '暂无' }}</h3>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="bi bi-journal-check"></i> 已完成学分</h5>
+                    <h3 class="fw-bold">{{ completed_credits or 0 }}</h3>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 暂无成绩记录。请确认是否已完成选课。
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#myGradesTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/zh.json'
+        },
+        pageLength: 25,
+        ordering: true,
+        info: true
+    });
+});
+</script>
+{% endblock %}

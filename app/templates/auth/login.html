@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}登录 - 教务管理系统{% endblock %}
+{% block page_title %}用户登录{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-mortarboard-fill text-primary" style="font-size: 3rem;"></i>
+                    <h4 class="mt-2">教务管理系统</h4>
+                </div>
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用户名</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username"
+                                   placeholder="请输入用户名" required autofocus>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密码</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="请输入密码" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> 登录
+                    </button>
+                </form>
+                <hr>
+                <div class="small text-muted">
+                    <p class="mb-1"><strong>测试账号：</strong></p>
+                    <table class="table table-sm table-borderless small mb-0">
+                        <tr><td>管理员</td><td><code>admin / 123456</code></td></tr>
+                        <tr><td>学生(张三)</td><td><code>zhangsan / 123456</code></td></tr>
+                        <tr><td>学生(李四)</td><td><code>lisi / 123456</code></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}智能助手{% endblock %}
+{% block page_title %}智能助手{% endblock %}
+{% block content %}
+<div id="agentRoot" data-csrf="{{ csrf_token() }}" data-user="{{ current_user.user_id }}">
+  <p class="text-muted">查询实时数据；修改先核对差异，再由你确认。文档导入会保留原始来源。</p>
+  <div id="notice" class="alert alert-info" role="status">可以开始查询，或上传需要导入的文档。</div>
+  <div class="row g-4">
+    <section class="col-lg-6">
+      <div class="card"><div class="card-header d-flex justify-content-between"><strong>对话查询与修改</strong><button id="newConversation" class="btn btn-sm btn-outline-secondary">新会话</button></div>
+      <div class="card-body">
+        <div id="messages" aria-live="polite" style="max-height:650px;overflow:auto"></div>
+        <form id="chatForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="form-label" for="question">想了解什么？</label>
+          <textarea id="question" class="form-control mb-2" maxlength="2000" required placeholder="例如：查询我的成绩；管理员可查询某门课程的成绩，或说明原因后提出修改"></textarea>
+          <button class="btn btn-primary" type="submit">发送</button>
+        </form>
+        <details class="mt-3"><summary>模型暂不可用时：直接查询</summary>
+          <select id="queryKind" class="form-select my-2"><option value="grades">成绩</option><option value="students">学生基本信息</option><option value="courses">开课与余量</option><option value="rewards">奖惩</option></select>
+          <input id="queryStudent" class="form-control mb-2" placeholder="学号（学生账号始终只查本人）">
+          <input id="queryOffering" class="form-control mb-2" type="number" min="1" placeholder="开课编号（成绩／课程查询可选）">
+          <button id="directQuery" class="btn btn-outline-primary">查询</button>
+        </details>
+      </div></div>
+    </section>
+    <section class="col-lg-6">
+      {% if current_user.role == 'admin' %}
+      <div class="card mb-3"><div class="card-header"><strong>导入文档</strong></div><div class="card-body">
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="form-label">业务类型</label>
+          <select name="kind" class="form-select mb-2"><option value="students">学生名单</option><option value="grades">成绩表</option><option value="courses">课程表</option><option value="offerings">开课表</option><option value="rewards">奖惩记录</option></select>
+          <label class="form-label">文档（每批最多500行）</label>
+          <input name="file" type="file" class="form-control mb-2" accept=".csv,.xlsx,.pdf,.png,.jpg,.jpeg,.docx" required>
+          <input id="sheet" class="form-control mb-2" placeholder="工作表名（Excel有多个工作表时必填；一次导入一个）">
+          <input id="offering" type="number" min="1" class="form-control mb-2" placeholder="目标开课编号（成绩表未提供开课编号时填写）">
+          <button class="btn btn-primary" type="submit">上传并识别</button>
+        </form>
+      </div></div>
+      <div class="card"><div class="card-header d-flex justify-content-between"><strong>导入批次</strong><button id="refreshBatches" class="btn btn-sm btn-outline-secondary">刷新</button></div>
+        <div class="card-body"><div id="batches"></div><div id="batchDetail"></div></div>
+      </div>
+      {% else %}
+      <div class="alert alert-secondary">你的查询范围是本人数据。文档导入和敏感字段修改由管理员操作。</div>
+      {% endif %}
+      <div class="card mt-3"><div class="card-header"><strong>数据来源与变更</strong></div>
+        <div class="card-body"><button id="loadChanges" class="btn btn-outline-secondary">查看可访问的变更记录</button><div id="changes" class="mt-3"></div></div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{{ url_for('static', filename='js/agent.js') }}"></script>{% endblock %}

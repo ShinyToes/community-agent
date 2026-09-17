@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}学院管理{% endblock %}
+{% block page_title %}学院管理{% endblock %}
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('college.create_college') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增学院
+    </a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped table-hover" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>学院代码</th><th>学院名称</th>
+                    <th>院长</th><th>办公地点</th><th>电话</th><th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in colleges %}
+                <tr>
+                    <td>{{ c.college_id }}</td><td>{{ c.college_code }}</td>
+                    <td>{{ c.college_name }}</td><td>{{ c.dean or '-' }}</td>
+                    <td>{{ c.office or '-' }}</td><td>{{ c.phone or '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('college.edit_college', college_id=c.college_id) }}"
+                           class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> 编辑</a>
+                        <form method="POST" action="{{ url_for('college.delete_college', college_id=c.college_id) }}"
+                              style="display:inline" onsubmit="return confirm('确定删除该学院吗？')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() { $('#dataTable').DataTable(); });
+</script>
+{% endblock %}

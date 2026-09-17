@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}体检数据统计{% endblock %}
+{% block page_title %}体检数据统计{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{{ url_for('physical_exam.list_exams') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-6"><div class="card"><div class="card-header">身高分布 (cm)</div><div class="card-body"><canvas id="heightChart" height="300"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header">体重分布 (kg)</div><div class="card-body"><canvas id="weightChart" height="300"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header">视力分布</div><div class="card-body"><canvas id="visionChart" height="300"></canvas></div></div></div>
+        <div class="col-md-6"><div class="card"><div class="card-header">血型分布</div><div class="card-body"><canvas id="bloodTypeChart" height="300"></canvas></div></div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $.getJSON('{{ url_for("physical_exam.api_stats") }}', function(data) {
+        new Chart(document.getElementById('heightChart').getContext('2d'), {
+            type: 'bar',
+            data: {labels: data.height.labels, datasets: [{label: '人数', data: data.height.values, backgroundColor: 'rgba(54,162,235,0.7)', borderColor: 'rgba(54,162,235,1)', borderWidth: 1}]},
+            options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {stepSize: 1}}}}
+        });
+        new Chart(document.getElementById('weightChart').getContext('2d'), {
+            type: 'bar',
+            data: {labels: data.weight.labels, datasets: [{label: '人数', data: data.weight.values, backgroundColor: 'rgba(75,192,192,0.7)', borderColor: 'rgba(75,192,192,1)', borderWidth: 1}]},
+            options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, ticks: {stepSize: 1}}}}
+        });
+        new Chart(document.getElementById('visionChart').getContext('2d'), {
+            type: 'bar',
+            data: {labels: data.vision.labels, datasets: [{label: '左眼', data: data.vision.left_values, backgroundColor: 'rgba(54,162,235,0.7)', borderColor: 'rgba(54,162,235,1)', borderWidth: 1}, {label: '右眼', data: data.vision.right_values, backgroundColor: 'rgba(255,99,132,0.7)', borderColor: 'rgba(255,99,132,1)', borderWidth: 1}]},
+            options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true, ticks: {stepSize: 1}}}}
+        });
+        new Chart(document.getElementById('bloodTypeChart').getContext('2d'), {
+            type: 'pie',
+            data: {labels: ['A型','B型','AB型','O型'], datasets: [{data: data.blood_type.values, backgroundColor: ['rgba(255,99,132,0.7)','rgba(54,162,235,0.7)','rgba(255,206,86,0.7)','rgba(75,192,192,0.7)'], borderWidth: 1}]},
+            options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {position: 'bottom'}}}
+        });
+    });
+});
+</script>
+{% endblock %}

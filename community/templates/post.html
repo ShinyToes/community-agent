@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{{ revision.title }} · Community{% endblock %}
+{% block content %}
+<article class="article">
+  <a href="{{ url_for('posts.mine') if post.status == 'draft' else url_for('index') }}">← {{ '我的内容' if post.status == 'draft' else '社区首页' }}</a>
+  <div class="post-meta"><span>{{ author.username }}</span><span>版本 {{ post.version }}</span><span>{{ '私有草稿 · 仅自己可见' if post.status == 'draft' else '公开帖子' }}</span></div>
+  <h1>{{ revision.title }}</h1>
+  <div class="tags">{% for tag in revision.tags %}<span># {{ tag }}</span>{% endfor %}</div>
+  <div class="markdown-body article-body">{{ body }}</div>
+  {% if current_user.is_authenticated and current_user.id == post.author_id %}
+  <div class="post-owner-actions">
+    <a class="button" href="{{ url_for('posts.edit', post_id=post.id) }}">{{ '编辑并发布' if post.status == 'draft' else '编辑帖子' }}</a>
+    <a href="{{ url_for('posts.revisions', post_id=post.id) }}">版本历史</a>
+    <button id="delete-post" class="danger-button" data-post-id="{{ post.id }}" data-version="{{ post.version }}" data-csrf="{{ csrf_token() }}">删除帖子</button>
+  </div>
+  <dialog id="delete-dialog"><h2>删除这篇帖子？</h2><p>删除后将不再可见，当前不支持自行恢复。</p><div class="dialog-actions"><button id="cancel-delete" class="button secondary">取消</button><button id="confirm-delete" class="button danger-button">确认删除</button></div><p id="delete-message" role="alert"></p></dialog>
+  <script src="{{ url_for('static', filename='posts.js') }}" defer></script>
+  {% endif %}
+</article>
+{% endblock %}

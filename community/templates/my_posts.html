@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}我的内容 · Community{% endblock %}
+{% block content %}
+<div class="section-heading"><div><p class="eyebrow">你的创作空间</p><h1>我的内容</h1><p>你的草稿与已发布帖子，按创建时间排列。</p></div><a class="button" href="{{ url_for('posts.new') }}">写帖子</a></div>
+{% include 'post_cards.html' %}
+{% if next_cursor %}<a class="button secondary" href="{{ url_for('posts.mine', cursor=next_cursor) }}">下一页</a>{% endif %}
+{% endblock %}

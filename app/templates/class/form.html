@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{% if cls %}编辑{% else %}新增{% endif %}班级{% endblock %}
+{% block page_title %}{% if cls %}编辑班级 - {{ cls.class_name }}{% else %}新增班级{% endif %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">班级名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="class_name" required
+                               value="{{ cls.class_name if cls else '' }}" placeholder="如: 计科2101">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">年级 <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="grade" required
+                               value="{{ cls.grade if cls else 2024 }}" min="2000" max="2099">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">所属专业 <span class="text-danger">*</span></label>
+                        <select class="form-select" name="major_id" required>
+                            <option value="">请选择专业</option>
+                            {% for m in majors %}
+                            <option value="{{ m.major_id }}"
+                                {% if cls and cls.major_id == m.major_id %}selected{% endif %}>
+                                {{ m.major_name }} ({{ m.college.college_name }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">班主任/辅导员</label>
+                        <input type="text" class="form-control" name="counselor"
+                               value="{{ cls.counselor if cls else '' }}" placeholder="如: 张老师">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                    <a href="{{ url_for('class.list_classes') }}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

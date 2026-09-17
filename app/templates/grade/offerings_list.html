@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}成绩录入 - 开课列表 - 学籍管理系统{% endblock %}
+{% block page_title %}成绩录入 — 选择开课{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item active" aria-current="page">成绩录入</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label for="academic_year" class="form-label">学年</label>
+                <select name="academic_year" id="academic_year" class="form-select">
+                    <option value="">全部学年</option>
+                    {% for ay in academic_years %}
+                    <option value="{{ ay }}" {% if ay == current_academic_year %}selected{% endif %}>{{ ay }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="semester" class="form-label">学期</label>
+                <select name="semester" id="semester" class="form-select">
+                    <option value="">全部学期</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem }}" {% if sem == current_semester %}selected{% endif %}>{{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> 筛选
+                </button>
+                {% if current_academic_year or current_semester %}
+                <a href="{{ url_for('grade.list_offerings_for_grade') }}" class="btn btn-outline-secondary ms-1">
+                    <i class="bi bi-x-circle"></i> 清除
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Offerings List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0"><i class="bi bi-calendar-check"></i> 开课列表</h5>
+    </div>
+    <div class="card-body">
+        {% if offerings %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle" id="offeringsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>编号</th>
+                        <th>课程名称</th>
+                        <th>课程代码</th>
+                        <th>授课教师</th>
+                        <th>学年</th>
+                        <th>学期</th>
+                        <th>上课安排</th>
+                        <th>教室</th>
+                        <th>选课人数</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for offering in offerings %}
+                    <tr>
+                        <td>{{ offering.offering_id }}</td>
+                        <td>
+                            <strong>{{ offering.course.course_name }}</strong>
+                            <br><small class="text-muted">{{ offering.course.course_type }}</small>
+                        </td>
+                        <td>{{ offering.course.course_code }}</td>
+                        <td>{{ offering.teacher.name }}</td>
+                        <td>{{ offering.academic_year }}</td>
+                        <td>{{ offering.semester }}</td>
+                        <td>{{ offering.schedule or '未设置' }}</td>
+                        <td>{{ offering.classroom or '未指定' }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ offering.cur_students }} / {{ offering.max_students }}</span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('grade.entry_form', offering_id=offering.offering_id) }}"
+                               class="btn btn-primary btn-sm">
+                                <i class="bi bi-pencil-square"></i> 录入成绩
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            {% if current_user.role == 'teacher' %}
+            您当前没有需要录入成绩的课程。
+            {% else %}
+            当前没有符合条件的开课记录。
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#offeringsTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/zh.json'
+        },
+        pageLength: 25,
+        ordering: true,
+        info: true,
+        order: [[4, 'desc'], [5, 'asc']]  // Sort by academic_year desc, then semester asc
+    });
+});
+</script>
+{% endblock %}

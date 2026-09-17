@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{% if record %}编辑{% else %}新增{% endif %}奖惩记录{% endblock %}
+{% block page_title %}{% if record %}编辑奖惩记录 - {{ record.title }}{% else %}新增奖惩记录{% endif %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">学号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="student_id" required
+                               value="{{ record.student_id if record else '' }}"
+                               placeholder="请输入学生学号">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">类型 <span class="text-danger">*</span></label>
+                        <select class="form-select" name="type" required>
+                            <option value="">-- 请选择类型 --</option>
+                            <option value="奖励" {% if record and record.type == '奖励' %}selected{% endif %}>奖励</option>
+                            <option value="惩罚" {% if record and record.type == '惩罚' %}selected{% endif %}>惩罚</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">标题 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="title" required
+                               value="{{ record.title if record else '' }}"
+                               placeholder="如: 三好学生、校级奖学金">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">级别</label>
+                        <select class="form-select" name="level">
+                            <option value="">-- 请选择级别 --</option>
+                            <option value="校级" {% if record and record.level == '校级' %}selected{% endif %}>校级</option>
+                            <option value="院级" {% if record and record.level == '院级' %}selected{% endif %}>院级</option>
+                            <option value="省级" {% if record and record.level == '省级' %}selected{% endif %}>省级</option>
+                            <option value="国家级" {% if record and record.level == '国家级' %}selected{% endif %}>国家级</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">日期 <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="rp_date" required
+                               value="{{ record.rp_date if record else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" name="description" rows="4"
+                                  placeholder="请输入奖惩详细描述">{{ record.description if record else '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">证明材料</label>
+                        <input type="file" class="form-control" name="evidence">
+                        <div class="form-text">可上传相关证明文件</div>
+                        {% if record and record.evidence %}
+                        <div class="form-text text-muted mt-1">当前文件: {{ record.evidence }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                    <a href="{{ url_for('reward_punish.list_records') }}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

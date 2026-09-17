@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{% if offering %}编辑开课信息{% else %}新增开课{% endif %}{% endblock %}
+{% block page_title %}{% if offering %}编辑开课信息{% else %}新增开课{% endif %}{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST"
+                      action="{% if offering %}
+                              {{ url_for('course.edit_offering', offering_id=offering.offering_id) }}
+                              {% else %}
+                              {{ url_for('course.create_offering') }}
+                              {% endif %}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="course_id" class="form-label">课程 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="course_id" name="course_id" required>
+                                <option value="">请选择课程</option>
+                                {% for c in courses %}
+                                <option value="{{ c.course_id }}"
+                                        {% if offering and offering.course_id == c.course_id %}selected{% endif %}>
+                                    {{ c.course_name }} ({{ c.course_code }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="teacher_id" class="form-label">授课教师 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="teacher_id" name="teacher_id" required>
+                                <option value="">请选择教师</option>
+                                {% for t in teachers %}
+                                <option value="{{ t.teacher_id }}"
+                                        {% if offering and offering.teacher_id == t.teacher_id %}selected{% endif %}>
+                                    {{ t.name }} ({{ t.title or '教师' }}) — ID:{{ t.teacher_id }} — {{ t.department or t.college.college_name if t.college else '未知院系' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="academic_year" class="form-label">学年 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="academic_year" name="academic_year"
+                                   value="{{ offering.academic_year if offering else '' }}"
+                                   placeholder="如 2025-2026" required maxlength="9">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="semester" class="form-label">学期 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="semester" name="semester" required>
+                                <option value="">请选择学期</option>
+                                <option value="第一学期" {% if offering and offering.semester == '第一学期' %}selected{% endif %}>第一学期</option>
+                                <option value="第二学期" {% if offering and offering.semester == '第二学期' %}selected{% endif %}>第二学期</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="classroom" class="form-label">教室</label>
+                            <input type="text" class="form-control" id="classroom" name="classroom"
+                                   value="{{ offering.classroom if offering else '' }}" maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="schedule" class="form-label">时间安排</label>
+                            <input type="text" class="form-control" id="schedule" name="schedule"
+                                   value="{{ offering.schedule if offering else '' }}"
+                                   placeholder="如 周一1-2节" maxlength="200">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="max_students" class="form-label">最大选课人数 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="max_students" name="max_students"
+                                   value="{{ offering.max_students if offering else '60' }}"
+                                   min="1" required>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="text-muted">总评成绩权重设置（三项之和应为 1.00）</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="daily_weight" class="form-label">平时成绩权重</label>
+                            <input type="number" class="form-control" id="daily_weight" name="daily_weight"
+                                   value="{{ '%.2f'|format(offering.daily_weight) if offering else '0.30' }}"
+                                   min="0" max="1" step="0.05">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="midterm_weight" class="form-label">期中成绩权重</label>
+                            <input type="number" class="form-control" id="midterm_weight" name="midterm_weight"
+                                   value="{{ '%.2f'|format(offering.midterm_weight) if offering else '0.30' }}"
+                                   min="0" max="1" step="0.05">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="final_weight" class="form-label">期末成绩权重</label>
+                            <input type="number" class="form-control" id="final_weight" name="final_weight"
+                                   value="{{ '%.2f'|format(offering.final_weight) if offering else '0.40' }}"
+                                   min="0" max="1" step="0.05">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">当前权重和：<span id="weightSum">1.00</span></small>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 保存
+                        </button>
+                        <a href="{{ url_for('course.list_offerings') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-lg"></i> 取消
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#daily_weight, #midterm_weight, #final_weight').on('input', function() {
+        var sum = 0;
+        sum += parseFloat($('#daily_weight').val()) || 0;
+        sum += parseFloat($('#midterm_weight').val()) || 0;
+        sum += parseFloat($('#final_weight').val()) || 0;
+        $('#weightSum').text(sum.toFixed(2));
+        if (Math.abs(sum - 1.0) < 0.001) {
+            $('#weightSum').removeClass('text-danger').addClass('text-success');
+        } else {
+            $('#weightSum').removeClass('text-success').addClass('text-danger');
+        }
+    });
+});
+</script>
+{% endblock %}

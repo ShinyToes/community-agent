@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Community · 技术交流社区{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='community.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">C</span>Community</a>
+    <nav aria-label="主导航">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('posts.mine') }}">我的内容</a>
+        <a class="button small" href="{{ url_for('posts.new') }}">写帖子</a>
+        <span class="account" title="{{ current_user.username }}">{{ current_user.username }}</span>
+        {% if current_user.role == 'admin' %}<a href="{{ url_for('admin') }}">管理</a>{% endif %}
+        <form action="{{ url_for('auth.logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link-button" type="submit">退出</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">登录</a>
+        <a class="button small" href="{{ url_for('auth.register') }}">加入社区</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Community · 在交流中理解，在实践中成长。</footer>
+</body>
+</html>
