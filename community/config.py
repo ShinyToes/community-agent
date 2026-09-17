@@ -22,6 +22,7 @@ def settings():
         'PERMANENT_SESSION_LIFETIME': timedelta(hours=12),
         'MAX_CONTENT_LENGTH': 256 * 1024,
         'POST_RATE_LIMIT': 60,
+        'IMAGE_RATE_LIMIT': 30,
         'LOGIN_RATE_LIMIT': 20,
         'REGISTER_RATE_LIMIT': 10,
         'AUTH_RATE_WINDOW': 600,

@@ -1,6 +1,6 @@
 # Community Agent · 社区内容助手
 
-**当前分支是富文本试用版 `experiment/rich-text`。** 原Markdown基线保留在 `main`，本机对比入口为5001（原版）与5002（试用版）。启动和回退说明见 [富文本试用说明](docs/richtext-trial.md)。
+**已正式采用富文本编辑，支持配图、文字颜色、背景色和字号。** 原5001服务及账号可继续使用，详情见 [图文编辑说明](docs/rich-media.md)。Markdown基线保留在标签 `markdown-phase1`，初版试用过程保留在experiment/rich-text分支。
 
 面向技术学习与项目交流的社区：发帖、评论、收藏，上传资料生成发布草稿，通过助手检索社区内容并获得带引用的回答。
 

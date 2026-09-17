@@ -70,6 +70,7 @@ class PostRevision(db.Model):
     revision_no = db.Column(db.Integer, nullable=False)
     title = db.Column(db.String(120), nullable=False)
     markdown = db.Column(db.Text().with_variant(MEDIUMTEXT(), 'mysql'), nullable=False)
+    rich_content = db.Column(db.JSON, nullable=True)
     tags = db.Column(db.JSON, nullable=False)
     editor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     change_reason = db.Column(db.String(500), nullable=False)
@@ -107,3 +108,19 @@ class PostOperation(db.Model):
     fingerprint = db.Column(db.String(64), nullable=False)
     result = db.Column(db.JSON, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+
+class ImageAsset(db.Model):
+    __tablename__ = 'image_asset'
+    id = db.Column(db.String(32), primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    size = db.Column(db.Integer, nullable=False)
+    width = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+
+class RevisionImage(db.Model):
+    __tablename__ = 'revision_image'
+    revision_id = db.Column(db.Integer, db.ForeignKey('post_revision.id'), primary_key=True)
+    image_id = db.Column(db.String(32), db.ForeignKey('image_asset.id'), primary_key=True)

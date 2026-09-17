@@ -11,7 +11,7 @@ from sqlalchemy.engine import make_url
 root = Path(__file__).resolve().parents[1]
 values = dotenv_values(root / '.env.community')
 url = make_url(values['COMMUNITY_DATABASE_URL'])
-if url.database != 'community_agent' or url.host != '127.0.0.1' or url.port != 13307:
+if url.database != 'community_agent' or url.host != '127.0.0.1' or url.port not in (13307, 13309):
     raise SystemExit('This test helper requires the generated local community configuration.')
 environment = {**os.environ, 'COMMUNITY_MYSQL_PORT': '13308',
     'COMMUNITY_TEST_DATABASE_URL': url.set(port=13308).render_as_string(hide_password=False)}

@@ -43,7 +43,8 @@ def test_migration_repeat_rollback_and_schema_match(app):
         command.upgrade(config, 'head')
         assert set(inspect(connection).get_table_names()) == {
             'user', 'audit_event', 'auth_rate_bucket', 'alembic_version',
-            'post', 'post_revision', 'post_tag', 'tag', 'content_chunk', 'post_operation'}
+            'post', 'post_revision', 'post_tag', 'tag', 'content_chunk', 'post_operation',
+            'image_asset', 'revision_image'}
         assert compare_metadata(MigrationContext.configure(connection), db.metadata) == []
         command.downgrade(config, 'base')
         assert inspect(connection).get_table_names() == ['alembic_version']

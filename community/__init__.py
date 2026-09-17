@@ -29,6 +29,8 @@ def create_app(overrides=None):
     @app.before_request
     def request_identity():
         g.request_id = uuid.uuid4().hex
+        if request.path == '/images' and request.method == 'POST':
+            request.max_content_length = 6 * 1024 * 1024
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -59,6 +61,8 @@ def create_app(overrides=None):
     app.register_blueprint(bp)
     from .posts import bp as posts_bp, listing
     app.register_blueprint(posts_bp)
+    from .images import bp as images_bp
+    app.register_blueprint(images_bp)
 
     @app.get('/')
     def index():

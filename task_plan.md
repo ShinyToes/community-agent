@@ -1,5 +1,13 @@
 # Community Agent 项目计划（含历史学籍阶段）
 
+## 当前任务：正式采用富文本，增加图片与文字颜色
+
+- 保留Markdown基线tag与独立功能分支：complete
+- 富文本结构持久化、图片权限与增量迁移：complete
+- 图片上传、颜色/背景/字号/基础排版及编辑恢复：complete
+- SQLite/MySQL与浏览器验证：complete
+- 备份部署到原5001服务、合并main及运行说明：in_progress（部署/文档已完成，待推送）
+
 ## 当前任务：GitHub基线与富文本可回退试用
 
 - 清理并检查发布源码、独立仓库main基线推送：complete

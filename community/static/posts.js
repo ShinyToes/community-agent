@@ -18,6 +18,7 @@
     const buttons = [...editor.querySelectorAll('button[type="submit"]')];
     const show = (text, error = false) => { message.textContent = text; message.className = error ? 'form-error' : 'success-message'; };
     const values = () => ({title: editor.elements.title.value, markdown: editor.elements.markdown.value,
+      ...(editor.richContent ? {rich_content: editor.richContent} : {}),
       tags: editor.elements.tags.value.split(/[,，]/).map(t => t.trim()).filter(Boolean),
       change_reason: editor.elements.change_reason?.value || ''});
     editor.addEventListener('input', () => { dirty = true; });

@@ -20,6 +20,7 @@ def app(tmp_path):
     application = create_app({
         'TESTING': True, 'SECRET_KEY': 'community-test-key-' * 3,
         'SQLALCHEMY_DATABASE_URI': uri or 'sqlite:///' + (tmp_path / 'community.sqlite').as_posix(),
+        'IMAGE_FOLDER': str(tmp_path / 'images'),
     })
     if uri:
         with application.app_context(), db.engine.begin() as connection:

@@ -11,11 +11,20 @@ from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
 from ..models import (AuditEvent, ContentChunk, Post, PostOperation, PostRevision,
-                      PostTag, Tag, User, utcnow)
+                      PostTag, Tag, User, ImageAsset, RevisionImage, utcnow)
+from ..richtext import compile_document
 
 
-def content(data):
+def content(data, actor_id):
     title, body, tags = data.get('title'), data.get('markdown'), data.get('tags', [])
+    rich = data.get('rich_content')
+    image_ids = set()
+    if rich is not None:
+        rich, _, body, image_ids = compile_document(rich)
+        found = set(db.session.scalars(select(ImageAsset.id).where(
+            ImageAsset.id.in_(image_ids), ImageAsset.owner_id == actor_id)).all()) if image_ids else set()
+        if found != image_ids:
+            abort(404, description='图片不存在或无权使用。')
     if not isinstance(title, str) or not 1 <= len(title.strip()) <= 120:
         abort(400, description='标题需要 1–120 个字符。')
     if not isinstance(body, str) or not body.strip() or len(body) > 30000 or '\x00' in body:
@@ -28,7 +37,7 @@ def content(data):
     reason = data.get('change_reason', '')
     if not isinstance(reason, str) or len(reason) > 500:
         abort(400, description='修改说明不能超过 500 个字符。')
-    return title.strip(), body, names, reason.strip()
+    return title.strip(), body, names, reason.strip(), rich, image_ids
 
 
 def readable(post_id, actor_id=None, *, owner_only=False):
@@ -82,7 +91,7 @@ def mutate(actor_id, action, data, post_id=None):
         abort(400)
     allowed = {'operation_key', 'base_version'}
     if action in ('create', 'edit'):
-        allowed |= {'title', 'markdown', 'tags', 'change_reason'}
+        allowed |= {'title', 'markdown', 'tags', 'change_reason', 'rich_content'}
     if set(data) - allowed:
         abort(400, description='请求包含不支持的字段。')
     try:
@@ -109,7 +118,7 @@ def mutate(actor_id, action, data, post_id=None):
         return previous
     try:
         if action == 'create':
-            values = content(data)
+            values = content(data, actor_id)
             post = Post(author_id=actor_id)
             db.session.add(post)
             db.session.flush()
@@ -122,7 +131,9 @@ def mutate(actor_id, action, data, post_id=None):
             if action == 'publish' and post.status != 'draft':
                 abort(409, description='帖子已发布或状态已变化，请重新打开帖子。')
             if action == 'edit':
-                values = content(data)
+                if revision_of(post).rich_content and data.get('rich_content') is None:
+                    abort(400, description='该帖子包含富文本格式，请在富文本编辑器中修改。')
+                values = content(data, actor_id)
             # Claim the exact version before modifying any revision, tag or chunk.
             claimed = db.session.execute(update(Post).where(Post.id == post.id,
                 Post.author_id == actor_id, Post.version == before,
@@ -141,15 +152,18 @@ def mutate(actor_id, action, data, post_id=None):
         if action in ('create', 'edit', 'publish'):
             if action == 'publish':
                 old = revision_of(post)
-                values = old.title, old.markdown, old.tags, '发布帖子'
+                image_ids = set(db.session.scalars(select(RevisionImage.image_id).where(RevisionImage.revision_id == old.id)))
+                values = old.title, old.markdown, old.tags, '发布帖子', old.rich_content, image_ids
                 post.status = 'published'
                 post.published_at = utcnow()
-            title, body, names, reason = values
+            title, body, names, reason, rich, image_ids = values
             revision = PostRevision(post_id=post.id, revision_no=post.version,
-                title=title, markdown=body, tags=names, editor_id=actor_id,
+                title=title, markdown=body, rich_content=rich, tags=names, editor_id=actor_id,
                 change_reason=reason or ('创建草稿' if action == 'create' else '保存编辑'))
             db.session.add(revision)
             db.session.flush()
+            for image_id in image_ids:
+                db.session.add(RevisionImage(revision_id=revision.id, image_id=image_id))
             post.current_revision_id = revision.id
             _tags(post.id, names)
             _chunks(post, revision)

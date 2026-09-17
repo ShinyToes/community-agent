@@ -7,6 +7,7 @@ from sqlalchemy import and_, or_, select
 
 from .extensions import db
 from .markdown import render_markdown
+from .richtext import render_revision
 from .models import Post, PostRevision, User
 from .security import consume_auth_attempt
 from .services.posts import mutate, readable, revision_of
@@ -25,7 +26,7 @@ def wants_json():
 def serialize(post, revision, username=None):
     return {'id': post.id, 'author_id': post.author_id, 'author': username,
         'status': post.status, 'version': post.version, 'title': revision.title,
-        'markdown': revision.markdown, 'tags': revision.tags,
+        'markdown': revision.markdown, 'rich_content': revision.rich_content, 'tags': revision.tags,
         'published_at': post.published_at.isoformat() if post.published_at else None}
 
 
@@ -65,6 +66,7 @@ def listing(mine=False):
     items = [serialize(post, revision, username) for post, revision, username in rows]
     for item in items:
         item['excerpt'] = item.pop('markdown')[:180]
+        item.pop('rich_content', None)
     return items, next_cursor
 
 
@@ -99,7 +101,7 @@ def detail(post_id):
     if wants_json():
         return jsonify(serialize(post, revision, author.username))
     return render_template('post.html', post=post, revision=revision, author=author,
-                            body=render_markdown(revision.markdown))
+                            body=render_revision(revision))
 
 
 @bp.get('/posts/<int:post_id>/edit')
@@ -123,10 +125,10 @@ def revisions(post_id):
     next_before = rows[-1].revision_no if more else None
     if wants_json():
         return jsonify(revisions=[{'revision_no': r.revision_no, 'title': r.title,
-            'markdown': r.markdown, 'tags': r.tags, 'change_reason': r.change_reason,
+            'markdown': r.markdown, 'rich_content': r.rich_content, 'tags': r.tags, 'change_reason': r.change_reason,
             'created_at': r.created_at.isoformat()} for r in rows], next_before=next_before)
     return render_template('revisions.html', post=post, revisions=rows,
-                            render_markdown=render_markdown, next_before=next_before)
+                            render_revision=render_revision, next_before=next_before)
 
 
 def write(action, post_id=None):
