@@ -1,4 +1,5 @@
 import uuid
+import secrets
 
 from flask import Flask, g, jsonify, render_template, request
 from flask_wtf.csrf import CSRFError, generate_csrf
@@ -29,6 +30,7 @@ def create_app(overrides=None):
     @app.before_request
     def request_identity():
         g.request_id = uuid.uuid4().hex
+        g.style_nonce = secrets.token_urlsafe(24)
         if request.path == '/images' and request.method == 'POST':
             request.max_content_length = 6 * 1024 * 1024
 
@@ -133,8 +135,12 @@ def create_app(overrides=None):
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'same-origin'
         response.headers['Content-Security-Policy'] = (
-            "default-src 'self'; script-src 'self'; style-src 'self'; "
+            f"default-src 'self'; script-src 'self'; style-src 'self' 'nonce-{g.style_nonce}'; "
             "img-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        if response.mimetype == 'text/html' and not response.direct_passthrough:
+            rules = ''.join(sorted(getattr(g, 'rich_color_rules', set())))
+            style = f'<style id="rich-color-styles" nonce="{g.style_nonce}">{rules}</style>'
+            response.set_data(response.get_data(as_text=True).replace('</head>', style + '</head>', 1))
         if request.endpoint != 'static':
             response.headers['Cache-Control'] = 'no-store'
         return response

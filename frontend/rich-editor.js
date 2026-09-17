@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
 import Image from '@tiptap/extension-image';
 import { TextStyle, Color, BackgroundColor, FontSize } from '@tiptap/extension-text-style';
+import { colorClass, createColorPicker } from './color-picker.js';
 
 const form = document.getElementById('post-editor');
 if (form) {
@@ -11,10 +12,12 @@ if (form) {
   const notice = document.getElementById('rich-notice');
   const submit = [...form.querySelectorAll('button[type="submit"]')];
   let loading = true, locked = false, uploading = false;
+  const colorPickers = {};
   const colors = {'#172b2b':'ink','#b42318':'red','#b54708':'orange','#8a6500':'gold','#175c4b':'green','#175cd3':'blue','#6941c6':'purple','#667085':'gray'};
   const backgrounds = {'#fff3bf':'yellow','#d3f9d8':'green','#dbeafe':'blue','#fce7f3':'pink'};
   const SafeTextStyle = TextStyle.extend({renderHTML({mark}) {
     const classes = [];
+    classes.push(colorClass(mark.attrs.color), colorClass(mark.attrs.backgroundColor, true));
     if (colors[mark.attrs.color]) classes.push('rt-fg-' + colors[mark.attrs.color]);
     if (backgrounds[mark.attrs.backgroundColor]) classes.push('rt-bg-' + backgrounds[mark.attrs.backgroundColor]);
     if (['14px','16px','20px','24px','32px'].includes(mark.attrs.fontSize)) classes.push('rt-size-' + mark.attrs.fontSize.slice(0,-2));
@@ -55,7 +58,9 @@ if (form) {
     onTransaction: ({editor}) => {
       toolbar.querySelectorAll('[data-mark]').forEach(button => button.setAttribute('aria-pressed', String(editor.isActive(button.dataset.mark))));
       const style = editor.getAttributes('textStyle');
-      for (const [id, attribute] of [['font-color','color'],['background-color','backgroundColor'],['font-size','fontSize']]) {
+      colorPickers.color?.(style.color);
+      colorPickers.backgroundColor?.(style.backgroundColor);
+      for (const [id, attribute] of [['font-size','fontSize']]) {
         const select = document.getElementById(id);
         select.value = [...select.options].some(option => option.value === style[attribute]) ? style[attribute] : '';
       }
@@ -128,11 +133,13 @@ if (form) {
     if (event.target.files[0]) upload(event.target.files[0]);
     event.target.value = '';
   });
-  document.getElementById('font-color').addEventListener('change', event => {
-    const chain = rich.chain().focus(); event.target.value ? chain.setColor(event.target.value).run() : chain.unsetColor().run();
+  colorPickers.color = createColorPicker(document.getElementById('font-color'), value => {
+    if (loading || locked || uploading) return false;
+    const chain = rich.chain().focus(); return value ? chain.setColor(value).run() : chain.unsetColor().run();
   });
-  document.getElementById('background-color').addEventListener('change', event => {
-    const chain = rich.chain().focus(); event.target.value ? chain.setBackgroundColor(event.target.value).run() : chain.unsetBackgroundColor().run();
+  colorPickers.backgroundColor = createColorPicker(document.getElementById('background-color'), value => {
+    if (loading || locked || uploading) return false;
+    const chain = rich.chain().focus(); return value ? chain.setBackgroundColor(value).run() : chain.unsetBackgroundColor().run();
   });
   document.getElementById('font-size').addEventListener('change', event => {
     const chain = rich.chain().focus(); event.target.value ? chain.setFontSize(event.target.value).run() : chain.unsetFontSize().run();

@@ -98,3 +98,12 @@
 
 实施中问题：pip 默认网络受限，批准联网后安装 Alembic；Docker 默认沙箱端点不可达，启动 Docker Desktop 并通过 desktop-linux 上下文运行独立项目；首轮 pytest 缺父临时目录，新增测试入口自动建立目录；测试包名称与 community 应用冲突，移除测试目录 __init__.py 并使用 importlib 模式。均已修正并验证，没有遗留阻塞。
 
+
+## Color picker (2026-09-17)
+- Palette and custom HEX/native picker: implemented, verification pending.
+- Preserve CSP with nonce styles; validate six-digit colors server-side.
+- Deploy primary 5001 and document: pending.
+
+Color picker verification: 56 tests passed; trial browser passed; primary deployment completed, final browser acceptance running.
+
+Color picker: complete. Primary 5001 browser acceptance passed.

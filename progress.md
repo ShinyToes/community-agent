@@ -108,3 +108,8 @@
 - Web与Worker后台启动；系统脚本策略阻止直接执行PS1后，改为只对当前进程生效的参数，未改系统策略。
 - README、实施差异记录、设计状态和五类虚构导入样例更新。原设计的完整评测、复杂扫描、可视化映射、更多业务未宣称完成。
 - 文档批量补丁第一次因同文件delete/add合并被拒绝，拆分后成功。
+
+## Color picker (2026-09-17)
+Implemented 40 swatches for foreground/background, native color input, HEX validation and resets. Arbitrary six-digit HEX colors persist with strict server validation and per-response nonce CSS. SQLite 56 passed; isolated 5002 browser passed including computed colors, reload, publish, history and 390px layout. Primary files backed up and deployed; first browser start raced service startup, health now ready.
+
+Primary 5001 acceptance passed: custom foreground/background computed styles, draft reload, publish, history, mobile panel, image permission checks; no JS errors. No schema changes.

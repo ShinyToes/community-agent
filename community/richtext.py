@@ -3,7 +3,7 @@ import re
 from html import escape
 from urllib.parse import urlsplit
 
-from flask import abort
+from flask import abort, g, has_request_context
 from markupsafe import Markup
 
 FG = {'#172b2b': 'ink', '#b42318': 'red', '#b54708': 'orange', '#8a6500': 'gold',
@@ -57,8 +57,15 @@ def compile_document(document):
                     for attr, choices, prefix in [('color', FG, 'rt-fg-'), ('backgroundColor', BG, 'rt-bg-')]:
                         color = ma.get(attr)
                         if color is None: continue
-                        if not isinstance(color, str) or color.lower() not in choices: fail('请选择工具栏提供的颜色。')
-                        color = color.lower(); kept[attr] = color; classes.append(prefix + choices[color])
+                        if not isinstance(color, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', color): fail('颜色需要使用六位 HEX 色号，例如 #3478ab。')
+                        color = color.lower(); kept[attr] = color
+                        if color in choices: classes.append(prefix + choices[color])
+                        color_class = prefix + color[1:]
+                        classes.append(color_class)
+                        if has_request_context():
+                            if not hasattr(g, 'rich_color_rules'): g.rich_color_rules = set()
+                            prop = 'color' if attr == 'color' else 'background-color'
+                            g.rich_color_rules.add(f'.{color_class}{{{prop}:{color}}}')
                     size = ma.get('fontSize')
                     if size is not None:
                         if not isinstance(size, str) or size not in SIZES: fail('请选择工具栏提供的字号。')

@@ -129,3 +129,30 @@ def test_image_only_post_and_limits(client):
     assert save(client,{'type':'doc','content':rich['content'] * 13}).status_code == 400
     assert save(client,{'type':'doc','content':[]}).status_code == 400
     assert save(client,{'type':'doc','content':[{'type':'paragraph','content':[{'type':'text','text':'中'*30001}]}]}).status_code == 400
+
+
+def test_custom_colors_persist_with_nonce_styles(app, client):
+    import re
+    register(client)
+    rich = document(color='#34AB78')
+    rich['content'][0]['content'][0]['marks'][0]['attrs']['backgroundColor'] = '#123456'
+    draft = save(client, rich)
+    assert draft.status_code == 201
+    public = publish(client, draft.json).json
+    guest = app.test_client()
+    response = guest.get(f"/posts/{public['id']}")
+    assert '.rt-fg-34ab78{color:#34ab78}' in response.text
+    assert '.rt-bg-123456{background-color:#123456}' in response.text
+    nonce = re.search(r'id="rich-color-styles" nonce="([^"]+)"', response.text)[1]
+    assert f"'nonce-{nonce}'" in response.headers['Content-Security-Policy']
+    assert 'unsafe-inline' not in response.headers['Content-Security-Policy']
+    assert nonce not in guest.get(f"/posts/{public['id']}").text
+    assert '.rt-fg-34ab78' in client.get(f"/posts/{public['id']}/revisions").text
+    stored = client.get(f"/posts/{public['id']}", headers=JSON).json
+    assert stored['rich_content']['content'][0]['content'][0]['marks'][0]['attrs']['color'] == '#34ab78'
+
+
+@pytest.mark.parametrize('color', ['#123', '#123456;position:fixed', '#ffffff</style><script>', 'rgb(1,2,3)', 123])
+def test_custom_color_rejects_invalid_css(client, color):
+    register(client)
+    assert save(client, document(color=color)).status_code == 400

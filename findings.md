@@ -50,3 +50,5 @@
 - 新库初始化遇到06脚本 SQL_SAFE_UPDATES，修复为暂存/恢复设置后完成；已建 Agent 增量表和虚构演示业务数据。
 - 已完成多Profile预览/确认/来源日志、只读工具、会话修改草稿、后台Worker和页面。扫描识别容器构建中。
 - 60项隔离测试通过（47项原测试+13项新增），真实MySQL测试运行中；真实DeepSeek尚无密钥，不声称验证真实模型效果。
+
+Color picker: previous frontend and backend limited colors to presets. Custom colors require validated HEX and nonce-authorized generated stylesheet to preserve strict CSP.
