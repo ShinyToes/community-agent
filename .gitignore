@@ -24,3 +24,28 @@ hw2
 
 .DS_Store
 Thumbs.db
+
+# Research assistant local exclusions
+.runtime/
+.env.research
+__pycache__/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.env
+.env.*
+!.env.example
+!.env.research.example
+**/.venv/
+**/venv/
+**/node_modules/
+**/browser_data/
+MediaCrawler/data/
+MediaCrawler/cache/
+testresult/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+.publish/

@@ -1,0 +1,38 @@
+{
+  "schema_version": "0.1",
+  "synthetic": true,
+  "description": "虚构的小型验收集合；不是用户数据或实际选手事实",
+  "records": [
+    {"id":"p1","kind":"post","external_id":"101","title":"CS 饰品价格","body":"CS更新后，饰品价格下跌。","source_keyword":"cs","published_at":"2026-09-18T00:00:00Z"},
+    {"id":"p2","kind":"post","external_id":"102","title":"旅游日记","body":"今天去了公园。","source_keyword":"cs饰品","published_at":null},
+    {"id":"p3","kind":"post","external_id":"103","title":"选手讨论","body":"donk 的这次表现值得讨论。","source_keyword":"donk","published_at":"2026-09-17T00:00:00Z"},
+    {"id":"p4","kind":"post","external_id":"104","title":"养殖记录","body":"小驴今天开始吃草。","source_keyword":"小驴","published_at":"2026-09-16T00:00:00Z"},
+    {"id":"p5","kind":"post","external_id":"105","title":"空正文样例","body":"","source_keyword":"cs","published_at":null},
+    {"id":"c1","kind":"comment","external_id":"201","post_id":"p1","parent_id":null,"body":"这次降得太狠了。"},
+    {"id":"c2","kind":"comment","external_id":"202","post_id":"p1","parent_id":"c1","body":"我认为 CS 饰品还会波动。"},
+    {"id":"c3","kind":"comment","external_id":"203","post_id":"missing-post","parent_id":null,"body":"缺少原帖的回复。"},
+    {"id":"c4","kind":"comment","external_id":"204","post_id":"p3","parent_id":null,"body":"小驴这局确实发挥得好。"}
+  ],
+  "cases": [
+    {"id":"E01","stage":"P1","action":"import_twice","record_ids":["p1","c1"],"expected":"第二次导入新增实体/快照/出现关系均为0"},
+    {"id":"E02","stage":"P1","action":"same_content_two_sources","record_ids":["p1"],"expected":"1实体、1快照、2来源关系；来源查询词可不同"},
+    {"id":"E03","stage":"P1","action":"changed_body","record_ids":["p1"],"expected":"同实体生成第二快照；旧证据不重定向"},
+    {"id":"E04","stage":"P1","action":"missing_post_then_import","record_ids":["c3"],"expected":"先unresolved；补入外部ID对应原帖后关联成功，不改评论文本"},
+    {"id":"E05","stage":"P1","action":"reply_chain","record_ids":["p1","c1","c2"],"expected":"c2父评论是c1，二者所属帖子是p1"},
+    {"id":"E06","stage":"P1","action":"empty_and_invalid","record_ids":["p5"],"expected":"空正文入库但无正文证据；另构造缺ID记录拒绝且报告行号"},
+    {"id":"E07","stage":"P2","action":"post_search","query":{"all_terms":["cs","饰品"]},"expected_ids":["p1"]},
+    {"id":"E08","stage":"P2","action":"post_search","query":{"any_terms":["cs","donk"]},"expected_ids":["p1","p3"]},
+    {"id":"E09","stage":"P2","action":"post_search","query":{"all_terms":["cs"],"exclude_terms":["下跌"]},"expected_ids":[]},
+    {"id":"E10","stage":"P2","action":"post_search","query":{"all_terms":["cs饰品"]},"expected_ids":[]},
+    {"id":"E11","stage":"P2","action":"comment_search","query":{"all_terms":["cs"]},"expected_ids":["c2"]},
+    {"id":"E12","stage":"P2","action":"time_range","record_ids":["p1","p2","p3","p4","p5"],"expected":"[2026-09-17T00:00:00Z,2026-09-18T00:00:00Z)只含p3；未知时间排除2条"},
+    {"id":"E13","stage":"P1/P3","action":"delete_source","record_ids":["p1"],"expected":"删一个来源另一个仍可用；删最后来源后检索排除，引用不可用，旧回答标失效"},
+    {"id":"E14","stage":"P2","action":"evidence_offsets","record_ids":["p1"],"expected":"quote等于原文[start:end]，不能引用source_keyword；错误ID明确报错"},
+    {"id":"E15","stage":"P2","action":"pagination_mutation","record_ids":["p1","p3"],"expected":"同条件分页稳定；修改筛选或索引版本后旧游标拒绝"},
+    {"id":"E16","stage":"P3","action":"grounded_answer","record_ids":["p1","c1","c2"],"expected":"区分原帖与评论，引用已读取片段，结论限定本地范围；不能宣称真实价格走势已证实"},
+    {"id":"E17","stage":"P3","action":"ambiguous_goal","record_ids":["p3","p4","c4"],"expected":"仅小驴且无语境则澄清；目标已是donk不转动物；c4只是上下文候选，不形成永久别名事实"},
+    {"id":"E18","stage":"P3","action":"tool_failure_budget","record_ids":[],"expected":"超时不等于无结果；取消停止执行；格式纠正不增加总预算；超过预算不继续调用"},
+    {"id":"E19","stage":"P3","action":"citation_navigation","record_ids":["p1","c2"],"expected":"点击评论引用定位对应本地评论，返回保留回答；刷新后会话恢复"},
+    {"id":"E20","stage":"P1","action":"partial_jsonl","record_ids":["p1"],"expected":"合法行导入，坏行有物理行号报告，整体partial；文件本身不被改写"}
+  ]
+}

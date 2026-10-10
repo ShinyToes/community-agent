@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "community-research-agent"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Local community data provenance and ingestion"
+dependencies = ["tzdata==2025.2; sys_platform == 'win32'", "httpx==0.28.1", "fastapi==0.110.2", "python-dotenv==1.0.1"]
+
+[project.optional-dependencies]
+embeddings = ["fastembed==0.7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/research"]
+addopts = "--import-mode=importlib --confcutdir=tests/research"
